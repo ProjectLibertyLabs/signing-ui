@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>Frequency Signing dApp</title>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+</head>
+<body style="margin: 22px;">
+<p>Token: <span id="unit">...</span></p>
+<form id="setupForm">
+    <label for="provider-list">Choose an Endpoint</label>
+    <select id="provider-list" required>
+        <option value="wss://rpc.rococo.frequency.xyz" name="rococo">Rococo</option>
+        <option value="wss://1.rpc.frequency.xyz" name="frequency">Mainnet</option>
+        <option value="ws://localhost:9944" name="localhost">Localhost</option>
+    </select>
+
+    <label for="signing-address">Signing Address</label>
+    <select id="signing-address" required></select>
+
+    <button type="button" id="connectButton">Connect to Node</button>
+</form>
+<footer>
+    <link rel="stylesheet" href="//unpkg.com/mvp.css@1.12/mvp.css">
+    <script src="index.js" type="module"></script>
+</footer>
+</body>
+</DOCTYPE>
