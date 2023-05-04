@@ -41,18 +41,27 @@ async function loadApi(providerUri) {
     PREFIX = Number(chain.ss58Format.toString());
     UNIT = chain.tokenSymbol.toHuman();
     document.getElementById("unit").innerText = UNIT;
-    return singletonApi;
+}
+
+function listenForExtrinsicsChange() {
+    // If people are playing around and switching providers, don't keep registering the listener.
+    // better to check a flag than to remove and add back.
+    if (!extrinsicsSelectionListenerIsRegistered) {
+        document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
+        extrinsicsSelectionListenerIsRegistered = true;
+    }
 }
 
 // Connect to the wallet and blockchain
 async function connect(event) {
     event.preventDefault();
     let selectedProvider = document.getElementById("provider-list").selectedOptions[0];
-    console.log({selectedProvider});
     providerName = selectedProvider.getAttribute("name");
-    let api = await loadApi(selectedProvider.getAttribute("value"));
+    await loadApi(selectedProvider.getAttribute("value"));
     await loadAccounts();
+    resetForms()
     document.getElementById("setupExtrinsic").setAttribute("class", "ready");
+    listenForExtrinsicsChange();
 }
 
 async function loadAccounts() {
@@ -68,7 +77,7 @@ async function loadAccounts() {
 
     // set options.
     accounts.forEach(a => {
-        // use only the accounts allowed for this chain
+        // display only the accounts allowed for this chain
         // TODO: add Alice..Ferdie accounts if localhost. add everything for localhost for now
         if (!a.meta.genesisHash
             || GENESIS_HASHES[providerName] === a.meta.genesisHash
@@ -80,13 +89,16 @@ async function loadAccounts() {
             document.getElementById("signing-address").add(el);
         }
     })
-    // If people are playing around and switching providers, don't keep registering the listener.
-    // better to check a flag than to remove and add back.
-    if (!extrinsicsSelectionListenerIsRegistered) {
-        document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
-        extrinsicsSelectionListenerIsRegistered = true;
-    }
+}
+
+// resetForms puts the form state back to initial setup with first extrinsic selected and first form showing
+function resetForms() {
     document.getElementById("handles_claim_handle").setAttribute("class", "extrinsic-form")
+    let selectedEl = document.getElementById("extrinsics").selectedOptions[0];
+    if (selectedEl.value !== "handles_claim_handle") {
+        document.getElementById(selectedEl.value).setAttribute("class", "hidden extrinsic-form");
+        selectedEl.selected = false;
+    }
 }
 
 function showExtrinsicForm(event) {

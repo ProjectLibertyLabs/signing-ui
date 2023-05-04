@@ -43,17 +43,35 @@
 
 <!-- HANDLES claim_handle -->
 <form id="handles_claim_handle" class="hidden extrinsic-form">
-    <p><em>handles.claim_handle</em></p>
-    <label for="claim_handle_handle">Desired Handle</label>
-    <input id="claim_handle_handle" placeholder="handle" required>
-    <button type="button" id="handles_claimHandleButton">Sign and submit</button>
+    <p><em>Claim Handle</em></p>
+    <label for="claim_handle_msaOwnerKey">MSA Owner Key (AccountId32)</label>
+    <input id="claim_handle_msaOwnerKey" required>
 
+    <label for="claim_handle_handle">Desired Handle</label>
+    <input id="claim_handle_handle" placeholder="handle text" required>
+
+    <label for="claim_handle_expiration">Expiration (blocks)</label>
+    <input id="claim_handle_expiration" placeholder="0" required>
+
+    <button type="button" id="handles_claimHandleButton">Sign and submit</button>
 </form>
+
 <!-- MSA create_sponsored_account_with_delegation -->
 <form id="msa_create_sponsored_account_with_delegation" class="hidden extrinsic-form">
-    <p><em>msa.create_sponsored_account_with_delegation</em></p>
-    <label for="create_sponsored_account_with_delegation_provider">Provider</label>
-    <input id="create_sponsored_account_with_delegation_provider" placeholder="provider MSA Id" required>
+    <p><em>Create Sponsored Account With Delegation</em></p>
+
+    <label for="create_sponsored_account_with_delegation_delegator_key">Delegator Key (AccountId32)</label>
+    <input id="create_sponsored_account_with_delegation_delegator_key" required>
+
+    <label for="create_sponsored_account_with_delegation_provider">Authorized Provider MSA Id</label>
+    <input id="create_sponsored_account_with_delegation_provider" required>
+
+    <label for="create_sponsored_account_with_delegation_schema_ids">Schema Ids</label>
+    <input id="create_sponsored_account_with_delegation_schema_ids" placeholder="e.g. 1,2,3" required>
+
+    <label for="create_sponsored_account_with_delegation_expiration">Expiration (blocks)</label>
+    <input id="create_sponsored_account_with_delegation_expiration" placeholder="0" required>
+
     <button type="button" id="msa_create_sponsored_account_with_delegationButton">Sign and submit</button>
 </form>
 
