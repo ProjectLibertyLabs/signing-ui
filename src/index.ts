@@ -1,4 +1,6 @@
+// @ts-ignore
 import { WsProvider, ApiPromise } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
+// @ts-ignore
 import { web3Accounts, web3Enable, web3FromAddress } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
 
 
@@ -52,16 +54,22 @@ function listenForExtrinsicsChange() {
     }
 }
 
+function getSelectedOption(elementId: string):  HTMLOptionElement {
+    let select: HTMLSelectElement = document.getElementById(elementId) as HTMLSelectElement;
+    return select.selectedOptions[0];
+}
+
 // Connect to the wallet and blockchain
 async function connect(event) {
     event.preventDefault();
-    let selectedProvider = document.getElementById("provider-list").selectedOptions[0];
+    let selectedProvider = getSelectedOption('provider-list');
     providerName = selectedProvider.getAttribute("name");
     await loadApi(selectedProvider.getAttribute("value"));
     await loadAccounts();
     resetForms()
     document.getElementById("setupExtrinsic").setAttribute("class", "ready");
     listenForExtrinsicsChange();
+    return;
 }
 
 async function loadAccounts() {
@@ -75,6 +83,8 @@ async function loadAccounts() {
     // clear options
     document.getElementById("signing-address").innerHTML = "";
 
+    let accountsSelect = document.getElementById("signing-address") as HTMLSelectElement;
+
     // set options.
     accounts.forEach(a => {
         // display only the accounts allowed for this chain
@@ -82,11 +92,11 @@ async function loadAccounts() {
         if (!a.meta.genesisHash
             || GENESIS_HASHES[providerName] === a.meta.genesisHash
             || providerName === "localhost") {
-            let el = document.createElement("option");
+            let el: HTMLOptionElement = document.createElement("option");
             el.setAttribute("value", a.address);
             el.setAttribute("name", a.address);
             el.innerText = `${a.meta.name}: ${a.address}`;
-            document.getElementById("signing-address").add(el);
+            accountsSelect.add(el);
         }
     })
 }
@@ -94,10 +104,10 @@ async function loadAccounts() {
 // resetForms puts the form state back to initial setup with first extrinsic selected and first form showing
 function resetForms() {
     document.getElementById("handles_claim_handle").setAttribute("class", "extrinsic-form")
-    let selectedEl = document.getElementById("extrinsics").selectedOptions[0];
-    if (selectedEl.value !== "handles_claim_handle") {
-        document.getElementById(selectedEl.value).setAttribute("class", "hidden extrinsic-form");
-        selectedEl.selected = false;
+    let selectedExtrinsic: HTMLOptionElement = getSelectedOption("extrinsics");
+    if (selectedExtrinsic.value !== "handles_claim_handle") {
+        document.getElementById(selectedExtrinsic.value).setAttribute("class", "hidden extrinsic-form");
+        selectedExtrinsic.selected = false;
     }
 }
 
