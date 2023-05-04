@@ -2,7 +2,10 @@
 import { WsProvider, ApiPromise } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
 // @ts-ignore
 import { web3Accounts, web3Enable, web3FromAddress } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
-
+// @ts-ignore
+import { Bytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+// @ts-ignore
+import { u8aWrapBytes } from "https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/cjs/index.min.js";
 
 let PREFIX = 42;
 let UNIT = "UNIT";
@@ -43,6 +46,8 @@ async function loadApi(providerUri) {
     PREFIX = Number(chain.ss58Format.toString());
     UNIT = chain.tokenSymbol.toHuman();
     document.getElementById("unit").innerText = UNIT;
+    getBlockNumber();
+    return;
 }
 
 function listenForExtrinsicsChange() {
@@ -52,6 +57,7 @@ function listenForExtrinsicsChange() {
         document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
         extrinsicsSelectionListenerIsRegistered = true;
     }
+    return;
 }
 
 function getSelectedOption(elementId: string):  HTMLOptionElement {
@@ -98,7 +104,9 @@ async function loadAccounts() {
             el.innerText = `${a.meta.name}: ${a.address}`;
             accountsSelect.add(el);
         }
-    })
+    });
+
+    return;
 }
 
 // resetForms puts the form state back to initial setup with first extrinsic selected and first form showing
@@ -109,6 +117,7 @@ function resetForms() {
         document.getElementById(selectedExtrinsic.value).setAttribute("class", "hidden extrinsic-form");
         selectedExtrinsic.selected = false;
     }
+    return;
 }
 
 function showExtrinsicForm(event) {
@@ -125,10 +134,35 @@ function showExtrinsicForm(event) {
             form.setAttribute("class", "extrinsic-form");
         }
     }
+    return;
+}
+
+async function claimHandle() {
+    // const handle_vec = new Bytes(ExtrinsicHelper.api.registry, handle);
+    // const payload = {
+    //     baseHandle: handle_vec,
+    //     expiration: currentBlock + 10,
+    // }
+    // const claimHandlePayload = ExtrinsicHelper.api.registry.createType("CommonPrimitivesHandlesClaimHandlePayload", payload);
+    //
+    // const proof = { Sr25519: u8aToHex(delegatorKeys.sign(u8aWrapBytes(payload.toU8a()))) }
+    //
+    //
+    // const claimHandle = ExtrinsicHelper.claimHandle(msaOwnerKeys, claimHandlePayload);
+    // const [event] = await claimHandle.fundAndSend();
+    // console.log({event});
+    return;
+}
+
+export async function getBlockNumber(): Promise<number> {
+    let blockData = await singletonApi.rpc.chain.getBlock();
+    console.log({blockData});
+    return (await blockData.block.header.number.toNumber())
 }
 
 function init() {
     document.getElementById("connectButton").addEventListener("click", connect);
+    return;
 }
 
 init();
