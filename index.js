@@ -8,6 +8,7 @@ let UNIT = "UNIT";
 let singletonApi;
 let singletonProvider;
 let providerName;
+let extrinsicsSelectionListenerIsRegistered = false;
 
 const GENESIS_HASHES = {
     rococo: "0x0c33dfffa907de5683ae21cc6b4af899b5c4de83f3794ed75b2dc74e1b088e72",
@@ -50,9 +51,8 @@ async function connect(event) {
     console.log({selectedProvider});
     providerName = selectedProvider.getAttribute("name");
     let api = await loadApi(selectedProvider.getAttribute("value"));
-    console.log({api});
     await loadAccounts();
-
+    document.getElementById("setupExtrinsic").setAttribute("class", "ready");
 }
 
 async function loadAccounts() {
@@ -63,9 +63,16 @@ async function loadAccounts() {
         return;
     }
     let accounts = await web3Accounts();
+    // clear options
     document.getElementById("signing-address").innerHTML = "";
+
+    // set options.
     accounts.forEach(a => {
-        if (!a.meta.genesisHash || GENESIS_HASHES[providerName] === a.meta.genesisHash) {
+        // use only the accounts allowed for this chain
+        // TODO: add Alice..Ferdie accounts if localhost. add everything for localhost for now
+        if (!a.meta.genesisHash
+            || GENESIS_HASHES[providerName] === a.meta.genesisHash
+            || providerName === "localhost") {
             let el = document.createElement("option");
             el.setAttribute("value", a.address);
             el.setAttribute("name", a.address);
@@ -73,7 +80,29 @@ async function loadAccounts() {
             document.getElementById("signing-address").add(el);
         }
     })
-    console.log({accounts})
+    // If people are playing around and switching providers, don't keep registering the listener.
+    // better to check a flag than to remove and add back.
+    if (!extrinsicsSelectionListenerIsRegistered) {
+        document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
+        extrinsicsSelectionListenerIsRegistered = true;
+    }
+    document.getElementById("handles_claim_handle").setAttribute("class", "extrinsic-form")
+}
+
+function showExtrinsicForm(event) {
+    event.preventDefault();
+    let selectedEl = event.target.selectedOptions[0];
+    let formToShow = selectedEl.value;
+    // hide all the forms
+    let forms = document.getElementsByClassName("extrinsic-form")
+    for (let i=0; i<forms.length; i++) {
+        let form = forms.item(i);
+        if (form.id !== formToShow) {
+            form.setAttribute("class", "hidden extrinsic-form");
+        } else {
+            form.setAttribute("class", "extrinsic-form");
+        }
+    }
 }
 
 function init() {

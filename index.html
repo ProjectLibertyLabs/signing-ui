@@ -3,6 +3,14 @@
     <meta charset="UTF-8">
     <title>Frequency Signing dApp</title>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <style>
+        .hidden {
+            display: none;
+        }
+        .ready {
+            display: block;
+        }
+    </style>
 </head>
 <body style="margin: 22px;">
 <p>Token: <span id="unit">...</span></p>
@@ -19,6 +27,76 @@
 
     <button type="button" id="connectButton">Connect to Node</button>
 </form>
+
+<form id="setupExtrinsic" class="hidden">
+    <label for="extrinsics">Select Extrinsic</label>
+    <select id="extrinsics">
+        <option value="handles_claim_handle">handles.claim_handle</option>
+        <option value="msa_create_sponsored_account_with_delegation">msa.create_sponsored_account_with_delegation</option>
+        <option value="msa_grant_delegation">msa.grant_delegation</option>
+        <option value="msa_add_public_key_to_msa">msa.add_public_key_to_msa</option>
+        <option value="stateful_storage_apply_item_actions_with_signature">stateful_storage.apply_item_actions_with_signature</option>
+        <option value="stateful_storage_upsert_page_with_signature">stateful_storage.upsert_page_with_signature</option>
+        <option value="stateful_storage_delete_page_with_signature">stateful_storage.delete_page_with_signature</option>
+    </select>
+</form>
+
+<!-- HANDLES claim_handle -->
+<form id="handles_claim_handle" class="hidden extrinsic-form">
+    <p><em>handles.claim_handle</em></p>
+    <label for="claim_handle_handle">Desired Handle</label>
+    <input id="claim_handle_handle" placeholder="handle" required>
+    <button type="button" id="handles_claimHandleButton">Sign and submit</button>
+
+</form>
+<!-- MSA create_sponsored_account_with_delegation -->
+<form id="msa_create_sponsored_account_with_delegation" class="hidden extrinsic-form">
+    <p><em>msa.create_sponsored_account_with_delegation</em></p>
+    <label for="create_sponsored_account_with_delegation_provider">Provider</label>
+    <input id="create_sponsored_account_with_delegation_provider" placeholder="provider MSA Id" required>
+    <button type="button" id="msa_create_sponsored_account_with_delegationButton">Sign and submit</button>
+</form>
+
+<!-- MSA  grant_delegation -->
+<form id="msa_grant_delegation" class="hidden extrinsic-form">
+    <p><em>msa.grant_delegation</em></p>
+    <label for="grant_delegation_provider">Provider</label>
+    <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
+    <button type="button" id="conButton">Sign and submit</button>
+</form>
+
+<!-- MSA  add_public_key_to_msa -->
+<form id="msa_add_public_key_to_msa" class="hidden extrinsic-form">
+    <p><em>msa.add_public_key_to_msa</em></p>
+    <label for="add_public_key_to_msa_new_key">New Key</label>
+    <input id="add_public_key_to_msa_new_key" placeholder="new key hex" required>
+    <button type="button" id="msa_grant_delegationButton">Sign and submit</button>
+</form>
+
+<!-- STATEFUL STORAGE apply_item_actions_with_signature -->
+<form id="stateful_storage_apply_item_actions_with_signature" class="hidden extrinsic-form">
+    <p><em>stateful_storage.apply_item_actions_with_signature</em></p>
+    <label for="apply_item_actions_with_signature_actions">Actions</label>
+    <input id="apply_item_actions_with_signature_actions" placeholder="actions" required>
+    <button type="button" id="stateful_storage_apply_item_actions_with_signatureButton">Sign and submit</button>
+</form>
+
+<!-- STATEFUL STORAGE upsert_page_with_signature -->
+<form id="stateful_storage_upsert_page_with_signature" class="hidden extrinsic-form">
+    <p><em>stateful_storage.upsert_page_with_signature</em></p>
+    <label for="upsert_page_with_signature_page">Page</label>
+    <input id="upsert_page_with_signature_page" placeholder="page data" required>
+    <button type="button" id="stateful_storage_upsert_page_with_signatureButton">Sign and submit</button>
+</form>
+
+<!-- STATEFUL STORAGE  delete_page_with_signature -->
+<form id="stateful_storage_delete_page_with_signature" class="hidden extrinsic-form">
+    <p><em>stateful_storage.delete_page_with_signature</em></p>
+    <label for="delete_page_with_signature_page">Page</label>
+    <input id="delete_page_with_signature_page" placeholder="page data" required>
+    <button type="button" id="stateful_storage_delete_page_with_signatureButton">Sign and submit</button>
+</form>
+
 <footer>
     <link rel="stylesheet" href="//unpkg.com/mvp.css@1.12/mvp.css">
     <script src="index.js" type="module"></script>
