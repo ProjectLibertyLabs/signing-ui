@@ -27,6 +27,10 @@
 
     <button type="button" id="connectButton">Connect to Node</button>
 </form>
+<form id="createMsaForm" class="hidden extrinsic-form">
+    <p>Click to create an MSA for the selected account if you need to before submitting one of the other extrinsics.</p>
+    <button type="button" id="createMsaButton">Create MSA</button>
+</form>
 
 <form id="setupExtrinsic" class="hidden">
     <label for="extrinsics">Select Extrinsic</label>
@@ -45,7 +49,7 @@
 <form id="handles_claim_handle" class="hidden extrinsic-form">
     <p><em>Claim Handle</em></p>
     <label for="claim_handle_msaOwnerKey">MSA Owner Key (AccountId32)</label>
-    <input id="claim_handle_msaOwnerKey" required>
+    <input id="claim_handle_msaOwnerKey" required placeholder="same as Signing Address" disabled>
 
     <label for="claim_handle_handle">Desired Handle</label>
     <input id="claim_handle_handle" placeholder="handle text" required>
