@@ -18,7 +18,7 @@
     <label for="provider-list">Choose an Endpoint</label>
     <select id="provider-list" required>
         <option value="wss://rpc.rococo.frequency.xyz" name="rococo">Rococo</option>
-        <option value="wss://1.rpc.frequency.xyz" name="frequency">Mainnet</option>
+<!--        <option value="wss://1.rpc.frequency.xyz" name="frequency">Mainnet</option>-->
         <option value="ws://localhost:9944" name="localhost">Localhost</option>
     </select>
 
@@ -84,15 +84,22 @@
     <p><em>msa.grant_delegation</em></p>
     <label for="grant_delegation_provider">Provider</label>
     <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
-    <button type="button" id="conButton">Sign and submit</button>
+    <button type="button" id="msa_grant_delegation_button">Sign and submit</button>
 </form>
 
 <!-- MSA  add_public_key_to_msa -->
 <form id="msa_add_public_key_to_msa" class="hidden extrinsic-form">
     <p><em>msa.add_public_key_to_msa</em></p>
-    <label for="add_public_key_to_msa_new_key">New Key</label>
-    <input id="add_public_key_to_msa_new_key" placeholder="new key hex" required>
-    <button type="button" id="msa_grant_delegationButton">Sign and submit</button>
+    <label for="add_public_key_to_msa_new_key">New MSA Owner Key (AccountId32></label>
+    <input id="add_public_key_to_msa_new_key" required>
+
+    <label for="add_public_key_to_msa_msa_id">MSA Id (number)</label>
+    <input id="add_public_key_to_msa_msa_id" required>
+
+    <label for="add_public_key_to_msa_expiration">Expiration (number)</label>
+    <input id="add_public_key_to_msa_expiration" placeholder="# of blocks from now" required>
+
+    <button type="button" id="add_public_key_to_msa_button">Sign and submit</button>
 </form>
 
 <!-- STATEFUL STORAGE apply_item_actions_with_signature -->

@@ -3,7 +3,7 @@ import { WsProvider, ApiPromise } from 'https://cdn.jsdelivr.net/npm/@polkadot/a
 // @ts-ignore
 import { web3Accounts, web3Enable, web3FromAddress, web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
 // @ts-ignore
-import { Bytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+import { Bytes, u64 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { stringToU8a, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
 // @ts-ignore
@@ -17,7 +17,6 @@ let UNIT = "UNIT";
 let singletonApi;
 let singletonProvider;
 let providerName;
-let extrinsicsSelectionListenerIsRegistered = false;
 let validAccounts: Record<string,any> = {};
 let registeredEvents: Record<string, any> = {};
 
@@ -60,10 +59,9 @@ async function loadApi(providerUri) {
 
 function listenForExtrinsicsChange() {
     // If people are playing around and switching providers, don't keep registering the listener.
-    // better to check a flag than to remove and add back.
-    if (!extrinsicsSelectionListenerIsRegistered) {
+    if (!registeredEvents["extrinsics"]) {
         document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
-        extrinsicsSelectionListenerIsRegistered = true;
+        registeredEvents["extrinsics"] = true;
     }
     return;
 }
@@ -72,9 +70,11 @@ function registerExtrinsicsButtonHandlers() {
     if (!registeredEvents['createMsaButton']) {
         document.getElementById('createMsaButton').addEventListener("click", createMsa);
         document.getElementById('handles_claimHandleButton').addEventListener("click", claimHandle);
+        document.getElementById('add_public_key_to_msa_button').addEventListener("click", addPublicKeyToMsa);
         // TODO: change to fn ptr and use a general click handler that routes to the right place
         registeredEvents['createMsaButton'] = true;
-        registeredEvents['claimHandle'] = true;
+        registeredEvents['handles_claimHandleButton'] = true;
+        registeredEvents['add_public_key_to_msa_button'] = true;
     }
 }
 
@@ -82,6 +82,12 @@ function registerExtrinsicsButtonHandlers() {
 function getSelectedOption(elementId: string):  HTMLOptionElement {
     let select: HTMLSelectElement = document.getElementById(elementId) as HTMLSelectElement;
     return select.selectedOptions[0];
+}
+
+// Gets the raw value from HTMLInputElement
+function getHTMLInputValue(elementId: string): string {
+    let input: HTMLInputElement = document.getElementById(elementId) as HTMLInputElement;
+    return input.value;
 }
 
 // Connect to the wallet and blockchain
@@ -111,8 +117,6 @@ async function loadAccounts() {
     // clear options
     document.getElementById("signing-address").innerHTML = "";
 
-    let accountsSelect = document.getElementById("signing-address") as HTMLSelectElement;
-
     // populating for localhost and for a parachain are different since with localhost, there is
     // access to the Alice/Bob/Charlie accounts etc., and so won't use the extension.
     if (providerName === "localhost") {
@@ -136,6 +140,7 @@ async function loadAccounts() {
     }
 
     // set options in the account dropdown.
+    let accountsSelect = document.getElementById("signing-address") as HTMLSelectElement;
     Object.keys(validAccounts).forEach( key => {
         const el: HTMLOptionElement = document.createElement("option");
         const a =  validAccounts[key];
@@ -195,53 +200,74 @@ async function claimHandle(event) {
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
 
-    const handleElem = document.getElementById("claim_handle_handle") as HTMLInputElement;
-    const handle_vec = new Bytes(singletonApi.registry, handleElem.value);
-
-    const ew: HTMLInputElement = document.getElementById("claim_handle_expiration") as HTMLInputElement;
-    const expireWindow = parseInt(ew.value, 10);
+    const handle_vec = new Bytes(singletonApi.registry, getHTMLInputValue('claim_handle_handle'));
+    const expireWindow = parseInt(getHTMLInputValue('claim_handle_expiration'), 10);
 
     const currentBlock = await getBlockNumber();
-    const rawPayload = {
-        baseHandle: handle_vec,
-        expiration: currentBlock + expireWindow,
-    }
-    const claimHandlePayload = singletonApi.registry.createType(
-        "CommonPrimitivesHandlesClaimHandlePayload", rawPayload
-    );
+    const rawPayload = { baseHandle: handle_vec,  expiration: currentBlock + expireWindow }
+    const payload = singletonApi.registry.createType("CommonPrimitivesHandlesClaimHandlePayload", rawPayload);
 
     if (providerName === 'localhost') {
-        const proof = { Sr25519: u8aToHex(signingAccount.sign(u8aWrapBytes(claimHandlePayload.toU8a()))) }
-        const claimHandleExtrinsic = singletonApi.tx.handles.claimHandle(signingAccount.publicKey, proof, claimHandlePayload);
-        const [event] = await claimHandleExtrinsic.signAndSend(signingAccount);
+        const proof = { Sr25519: u8aToHex(signingAccount.sign(u8aWrapBytes(payload.toU8a()))) }
+        const extrinsic = singletonApi.tx.handles.claimHandle(signingAccount.publicKey, proof, payload);
+        const [event] = await extrinsic.signAndSend(signingAccount);
         console.log({event})
     } else {
         // TODO: allow signing account and MSA Owner Key to be different
-        // const injector = await web3FromSource(signingAccount.meta.source);
-        // const signRaw = injector?.signer?.signRaw;
-        //
-        // // This uses the extension to sign.
-        // if (!!signRaw) {
-        //     // after making sure that signRaw is defined
-        //     // we can use it to sign our message
-        //     const { signature } = await signRaw({
-        //         address: signingKey,
-        //         data: claimHandlePayload,
-        //         type: 'bytes'
-        //     });
-        //     const claimHandleExtrinsic = singletonApi.tx.handles.claimHandle(
-        //         signingKey, signature, claimHandlePayload
-        //     )
-        //
-        //     let result = await claimHandleExtrinsic.signAndSend(signingKey, {signer: injector.signer});
-        //     console.log({result})
-        // }
+        const injector = await web3FromSource(signingAccount.meta.source);
+        const signRaw = injector?.signer?.signRaw;
+
+        // This uses the extension to sign.
+        // TODO: not tested yet
+        if (!!signRaw) {
+            // after making sure that signRaw is defined
+            // we can use it to sign our message
+            const { signature } = await signRaw({
+                address: signingKey,
+                data: payload,
+                type: 'bytes'
+            });
+            const extrinsic = singletonApi.tx.handles.claimHandle(
+                signingKey, signature, payload
+            )
+
+            let [event] = await extrinsic.signAndSend(signingKey, {signer: injector.signer});
+            console.log({event})
+        } else {
+            alert("Could not get injector.signer.signRaw");
+        }
     }
+}
 
 
-    // const claimHandle = ExtrinsicHelper.claimHandle(msaOwnerKeys, claimHandlePayload);
-    // const [event] = await claimHandle.fundAndSend();
-    // console.log({event});
+type AddKeyData = { msaId?: u64; expiration?: any; newPublicKey?: any; }
+async function addPublicKeyToMsa(event) {
+    // get the signing key
+    const signingKey = getSelectedOption('signing-address').value;
+    const signingAccount = validAccounts[signingKey];
+
+    const newKey = getHTMLInputValue('add_public_key_to_msa_new_key');
+    const newAccount = validAccounts[newKey];
+
+    let currentBlock = await getBlockNumber();
+    const expiration: u64 = currentBlock + parseInt(getHTMLInputValue('add_public_key_to_msa_expiration'));
+    console.log("expiration: ", expiration);
+
+    let rawPayload: AddKeyData = {
+        msaId: getHTMLInputValue('add_public_key_to_msa_msa_id'),
+        expiration: expiration,
+        newPublicKey: newKey,
+    }
+    const payload = singletonApi.registry.createType("PalletMsaAddKeyData", rawPayload);
+
+    //   return { Sr25519: u8aToHex(keys.sign(u8aWrapBytes(data.toU8a()))) }
+    if (providerName === 'localhost') {
+        const ownerKeyProof = { Sr25519: u8aToHex(signingAccount.sign(u8aWrapBytes(payload.toU8a()))) };
+        const newKeyProof = { Sr25519: u8aToHex(newAccount.sign(u8aWrapBytes(payload.toU8a()))) };
+        const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.publicKey, ownerKeyProof, newKeyProof, payload);
+        const [event] = await extrinsic.signAndSend(signingAccount);
+        console.log({event})
+    }
 }
 
 export async function getBlockNumber(): Promise<number> {
