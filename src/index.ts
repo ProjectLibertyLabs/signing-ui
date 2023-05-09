@@ -9,7 +9,17 @@ import { isFunction, stringToU8a, u8aToHex, u8aWrapBytes } from 'https://cdn.jsd
 // @ts-ignore
 import { Keyring, KeyringPair } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm'
 
-import { setVisibility } from "./domActions.js";
+import {
+    clearSignedPayload,
+    getHTMLInputValue,
+    getSelectedOption,
+    listenForExtrinsicsChange,
+    setVisibility,
+} from "./domActions.js";
+
+import {
+    getBlockNumber
+} from "./chainActions.js";
 
 // const Hash = interfaces.Hash;
 
@@ -56,19 +66,9 @@ async function loadApi(providerUri) {
     UNIT = chain.tokenSymbol.toHuman();
     document.getElementById("unit").innerText = UNIT;
 
-    let blockNumber = await getBlockNumber();
-    console.log({blockNumber});
+    let blockNumber = await getBlockNumber(singletonApi);
+    document.getElementById("current-block").innerHTML = blockNumber.toString();
 
-}
-
-function listenForExtrinsicsChange() {
-    // If people are playing around and switching providers, don't keep registering the listener.
-    if (!registeredEvents["extrinsics"]) {
-        document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
-        (document.getElementById('signed_payload') as HTMLTextAreaElement).value = '';
-        registeredEvents["extrinsics"] = true;
-    }
-    return;
 }
 
 function registerExtrinsicsButtonHandlers() {
@@ -83,18 +83,6 @@ function registerExtrinsicsButtonHandlers() {
         registeredEvents['handles_claim_handle_sign_button'] = true;
         registeredEvents['add_public_key_to_msa_sign_button'] = true;
     }
-}
-
-// assumes only 1 item is selected.
-function getSelectedOption(elementId: string):  HTMLOptionElement {
-    let select: HTMLSelectElement = document.getElementById(elementId) as HTMLSelectElement;
-    return select.selectedOptions[0];
-}
-
-// Gets the raw value from HTMLInputElement
-function getHTMLInputValue(elementId: string): string {
-    let input: HTMLInputElement = document.getElementById(elementId) as HTMLInputElement;
-    return input.value;
 }
 
 // Connect to the wallet and blockchain
@@ -173,18 +161,6 @@ function resetForms() {
     if (selectedExtrinsic.value !== "handles_claim_handle") {
         setVisibility(selectedExtrinsic.value, false);
         selectedExtrinsic.selected = false;
-    }
-}
-
-function showExtrinsicForm(event) {
-    event.preventDefault();
-    const selectedEl = event.target.selectedOptions[0];
-    const formToShow = selectedEl.value;
-    // hide all the forms but the selected ones.
-    const forms = document.getElementsByClassName("extrinsic-form")
-    for (let i=0; i<forms.length; i++) {
-        let form_id = forms.item(i).id;
-        setVisibility(form_id, form_id === formToShow)
     }
 }
 
@@ -296,8 +272,7 @@ async function addPublicKeyToMsaSignPayload(event) {
     const newKey = getHTMLInputValue('add_public_key_to_msa_new_key');
     const newAccount = validAccounts[newKey];
 
-    let currentBlock = await getBlockNumber();
-    const expiration: u64 = currentBlock + parseInt(getHTMLInputValue('add_public_key_to_msa_expiration'));
+    const expiration: u64 = parseInt(getHTMLInputValue('add_public_key_to_msa_expiration'));
 
     let rawPayload: AddKeyData = {
         msaId: getHTMLInputValue('add_public_key_to_msa_msa_id'),
@@ -326,11 +301,6 @@ async function addPublicKeyToMsaSignPayload(event) {
         await extrinsic.signAndSend(signingAccount);
     console.log({chainEvent})
 
-}
-
-export async function getBlockNumber(): Promise<number> {
-    let blockData = await singletonApi.rpc.chain.getBlock();
-    return (await blockData.block.header.number.toNumber())
 }
 
 function init() {
