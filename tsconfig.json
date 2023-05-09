@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["dom","es2022"],
+    "lib": ["dom","ES2021"],
     "outDir": "./built",
     "target": "es2022",
     "module": "ESNext",

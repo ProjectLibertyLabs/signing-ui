@@ -10,6 +10,17 @@
         .ready {
             display: block;
         }
+        .container {
+            display: flex;
+            align-items: stretch;
+        }
+        .container div {
+            flex-grow: 1;
+        }
+        #signed_payload {
+            height: 100px;
+        }
+
     </style>
 </head>
 <body style="margin: 22px;">
@@ -45,86 +56,104 @@
     </select>
 </form>
 
-<!-- HANDLES claim_handle -->
-<form id="handles_claim_handle" class="hidden extrinsic-form">
-    <p><em>Claim Handle</em></p>
-    <label for="claim_handle_msaOwnerKey">MSA Owner Key (AccountId32)</label>
-    <input id="claim_handle_msaOwnerKey" required placeholder="same as Signing Address" disabled>
+<div class="container">
+    <div class="extrinsics">
+        <!-- HANDLES claim_handle -->
+        <form id="handles_claim_handle" class="hidden extrinsic-form">
+            <p><em>Claim Handle</em></p>
+            <label for="claim_handle_msaOwnerKey">MSA Owner Key (AccountId32)</label>
+            <input id="claim_handle_msaOwnerKey" required placeholder="same as Signing Address" disabled>
 
-    <label for="claim_handle_handle">Desired Handle</label>
-    <input id="claim_handle_handle" placeholder="handle text" required>
+            <label for="claim_handle_handle">Desired Handle</label>
+            <input id="claim_handle_handle" placeholder="handle text" required>
 
-    <label for="claim_handle_expiration">Expiration (blocks)</label>
-    <input id="claim_handle_expiration" placeholder="0" required>
+            <label for="claim_handle_expiration">Expiration Block</label>
+            <input id="claim_handle_expiration" placeholder="0" required>
 
-    <button type="button" id="handles_claimHandleButton">Sign and submit</button>
-</form>
+            <button type="button" id="handles_claim_handle_sign_button">Sign payload</button>
 
-<!-- MSA create_sponsored_account_with_delegation -->
-<form id="msa_create_sponsored_account_with_delegation" class="hidden extrinsic-form">
-    <p><em>Create Sponsored Account With Delegation</em></p>
+            <label for="handles_claim_handle_submit_button">Submit extrinsic with these values</label>
+            <button type="button" id="handles_claim_handle_submit_button">Submit Extrinsic</button>
+        </form>
 
-    <label for="create_sponsored_account_with_delegation_delegator_key">Delegator Key (AccountId32)</label>
-    <input id="create_sponsored_account_with_delegation_delegator_key" required>
+        <!-- MSA create_sponsored_account_with_delegation -->
+        <form id="msa_create_sponsored_account_with_delegation" class="hidden extrinsic-form">
+            <p><em>Create Sponsored Account With Delegation</em></p>
 
-    <label for="create_sponsored_account_with_delegation_provider">Authorized Provider MSA Id</label>
-    <input id="create_sponsored_account_with_delegation_provider" required>
+            <label for="create_sponsored_account_with_delegation_delegator_key">Delegator Key (AccountId32)</label>
+            <input id="create_sponsored_account_with_delegation_delegator_key" required>
 
-    <label for="create_sponsored_account_with_delegation_schema_ids">Schema Ids</label>
-    <input id="create_sponsored_account_with_delegation_schema_ids" placeholder="e.g. 1,2,3" required>
+            <label for="create_sponsored_account_with_delegation_provider">Authorized Provider MSA Id</label>
+            <input id="create_sponsored_account_with_delegation_provider" required>
 
-    <label for="create_sponsored_account_with_delegation_expiration">Expiration (blocks)</label>
-    <input id="create_sponsored_account_with_delegation_expiration" placeholder="0" required>
+            <label for="create_sponsored_account_with_delegation_schema_ids">Schema Ids</label>
+            <input id="create_sponsored_account_with_delegation_schema_ids" placeholder="e.g. 1,2,3" required>
 
-    <button type="button" id="msa_create_sponsored_account_with_delegationButton">Sign and submit</button>
-</form>
+            <label for="create_sponsored_account_with_delegation_expiration">Expiration (blocks)</label>
+            <input id="create_sponsored_account_with_delegation_expiration" placeholder="0" required>
 
-<!-- MSA  grant_delegation -->
-<form id="msa_grant_delegation" class="hidden extrinsic-form">
-    <p><em>msa.grant_delegation</em></p>
-    <label for="grant_delegation_provider">Provider</label>
-    <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
-    <button type="button" id="msa_grant_delegation_button">Sign and submit</button>
-</form>
+            <button type="button" id="msa_create_sponsored_account_with_delegationButton">Sign and submit</button>
+        </form>
 
-<!-- MSA  add_public_key_to_msa -->
-<form id="msa_add_public_key_to_msa" class="hidden extrinsic-form">
-    <p><em>msa.add_public_key_to_msa</em></p>
-    <label for="add_public_key_to_msa_new_key">New MSA Owner Key (AccountId32></label>
-    <input id="add_public_key_to_msa_new_key" required>
+        <!-- MSA  grant_delegation -->
+        <form id="msa_grant_delegation" class="hidden extrinsic-form">
+            <p><em>msa.grant_delegation</em></p>
+            <label for="grant_delegation_provider">Provider</label>
+            <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
+            <button type="button" id="msa_grant_delegation_button">Sign and submit</button>
+        </form>
 
-    <label for="add_public_key_to_msa_msa_id">MSA Id (number)</label>
-    <input id="add_public_key_to_msa_msa_id" required>
+        <!-- MSA  add_public_key_to_msa -->
+        <form id="msa_add_public_key_to_msa" class="hidden extrinsic-form">
+            <p><em>msa.add_public_key_to_msa</em></p>
+            <label for="add_public_key_to_msa_new_key">New MSA Owner Key (AccountId32></label>
+            <input id="add_public_key_to_msa_new_key" required>
 
-    <label for="add_public_key_to_msa_expiration">Expiration (number)</label>
-    <input id="add_public_key_to_msa_expiration" placeholder="# of blocks from now" required>
+            <label for="add_public_key_to_msa_msa_id">MSA Id (number)</label>
+            <input id="add_public_key_to_msa_msa_id" required>
 
-    <button type="button" id="add_public_key_to_msa_button">Sign and submit</button>
-</form>
+            <label for="add_public_key_to_msa_expiration">Expiration (number)</label>
+            <input id="add_public_key_to_msa_expiration" placeholder="# of blocks from now" required>
 
-<!-- STATEFUL STORAGE apply_item_actions_with_signature -->
-<form id="stateful_storage_apply_item_actions_with_signature" class="hidden extrinsic-form">
-    <p><em>stateful_storage.apply_item_actions_with_signature</em></p>
-    <label for="apply_item_actions_with_signature_actions">Actions</label>
-    <input id="apply_item_actions_with_signature_actions" placeholder="actions" required>
-    <button type="button" id="stateful_storage_apply_item_actions_with_signatureButton">Sign and submit</button>
-</form>
+            <button type="button" id="add_public_key_to_msa_sign_button">Sign payload</button>
 
-<!-- STATEFUL STORAGE upsert_page_with_signature -->
-<form id="stateful_storage_upsert_page_with_signature" class="hidden extrinsic-form">
-    <p><em>stateful_storage.upsert_page_with_signature</em></p>
-    <label for="upsert_page_with_signature_page">Page</label>
-    <input id="upsert_page_with_signature_page" placeholder="page data" required>
-    <button type="button" id="stateful_storage_upsert_page_with_signatureButton">Sign and submit</button>
-</form>
+            <button type="button" id="add_public_key_to_msa_submit_button">Submit extrinsic</button>
+        </form>
 
-<!-- STATEFUL STORAGE  delete_page_with_signature -->
-<form id="stateful_storage_delete_page_with_signature" class="hidden extrinsic-form">
-    <p><em>stateful_storage.delete_page_with_signature</em></p>
-    <label for="delete_page_with_signature_page">Page</label>
-    <input id="delete_page_with_signature_page" placeholder="page data" required>
-    <button type="button" id="stateful_storage_delete_page_with_signatureButton">Sign and submit</button>
-</form>
+        <!-- STATEFUL STORAGE apply_item_actions_with_signature -->
+        <form id="stateful_storage_apply_item_actions_with_signature" class="hidden extrinsic-form">
+            <p><em>stateful_storage.apply_item_actions_with_signature</em></p>
+            <label for="apply_item_actions_with_signature_actions">Actions</label>
+            <input id="apply_item_actions_with_signature_actions" placeholder="actions" required>
+            <button type="button" id="stateful_storage_apply_item_actions_with_signatureButton">Sign and submit</button>
+        </form>
+
+        <!-- STATEFUL STORAGE upsert_page_with_signature -->
+        <form id="stateful_storage_upsert_page_with_signature" class="hidden extrinsic-form">
+            <p><em>stateful_storage.upsert_page_with_signature</em></p>
+            <label for="upsert_page_with_signature_page">Page</label>
+            <input id="upsert_page_with_signature_page" placeholder="page data" required>
+            <button type="button" id="stateful_storage_upsert_page_with_signatureButton">Sign and submit</button>
+        </form>
+
+        <!-- STATEFUL STORAGE  delete_page_with_signature -->
+        <form id="stateful_storage_delete_page_with_signature" class="hidden extrinsic-form">
+            <p><em>stateful_storage.delete_page_with_signature</em></p>
+            <label for="delete_page_with_signature_page">Page</label>
+            <input id="delete_page_with_signature_page" placeholder="page data" required>
+            <button type="button" id="stateful_storage_delete_page_with_signatureButton">Sign and submit</button>
+        </form>
+    </div>
+    <div class="payload">
+        <form id="payload_signature" class="clear_on_reset disable_on_reset right">
+            <label for="signed_payload">Signed Payload</label>
+            <textarea id="signed_payload" disabled></textarea>
+        </form>
+    </div>
+
+
+</div>
+
 
 <footer>
     <link rel="stylesheet" href="//unpkg.com/mvp.css@1.12/mvp.css">
