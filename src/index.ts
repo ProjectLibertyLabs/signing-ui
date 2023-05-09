@@ -1,23 +1,25 @@
 // @ts-ignore
-import { WsProvider, ApiPromise } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
+import { WsProvider, ApiPromise, InjectedSigner } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
 // @ts-ignore
 import { web3Accounts, web3Enable, web3FromAddress, web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
 // @ts-ignore
-import { Bytes, SignerResult, SignerPayloadRaw, Sr25519Signature, u64 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+import { Bytes, Signer, SignerResult, SignerPayloadRaw, Sr25519Signature, u64 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { isFunction, stringToU8a, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
 // @ts-ignore
-import { Keyring } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm'
+import { Keyring, KeyringPair } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm'
 
 // const Hash = interfaces.Hash;
 
 let PREFIX = 42;
 let UNIT = "UNIT";
 
+type AnySigner = KeyringPair | Signer;
+
 let singletonApi: ApiPromise;
 let singletonProvider: WsProvider;
 let providerName: string;
-let validAccounts: Record<string,any> = {};
+let validAccounts: Record<string, AnySigner> = {};
 let registeredEvents: Record<string, any> = {};
 
 const GENESIS_HASHES = {
@@ -197,6 +199,27 @@ async function createMsa(event) {
     }
 }
 
+
+// converting to Sr25519Signature is very important, otherwise the signature length
+// is incorrect - just using signature gives:
+// Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
+async function signPayloadWithExtension(signingAccount: Signer, signingKey: string, payloadWrappedToU8a): Promise<[InjectedSigner, Sr25519Signature]>{
+    // TODO: allow signing account and MSA Owner Key to be different
+    const injector = await web3FromSource(signingAccount.meta.source);
+    const signer = injector?.signer;
+    const signRaw = signer?.signRaw;
+    let signed: SignerResult;
+    if (signer && isFunction(signRaw)) {
+        signed = await signRaw({
+            address: signingKey,
+            data: payloadWrappedToU8a as SignerPayloadRaw,
+            type: 'bytes'
+        })
+    }
+    const signature: Sr25519Signature = signed?.signature as Sr25519Signature;
+    return [signer, signature];
+}
+
 // ------------------- claimHandle
 async function claimHandle(_event) {
     // get the signing key
@@ -211,43 +234,21 @@ async function claimHandle(_event) {
     const payload = singletonApi.registry.createType("CommonPrimitivesHandlesClaimHandlePayload", rawPayload);
     let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
 
-    if (providerName === 'localhost') {
-        let signature = signingAccount.sign(payloadWrappedToU8a);
-        const proof = { Sr25519: u8aToHex(signature) };
-        const extrinsic = singletonApi.tx.handles.claimHandle(signingAccount.publicKey, proof, payload);
-        const [event] = await extrinsic.signAndSend(signingAccount);
-        console.log({event})
-    } else {
+    const [signer, signature] = providerName !== 'localhost' ?
+        await signPayloadWithExtension(signingAccount, signingKey, payloadWrappedToU8a) :
+        [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
 
-        // TODO: allow signing account and MSA Owner Key to be different
-        const injector = await web3FromSource(signingAccount.meta.source);
-        const signer = injector?.signer;
-        const signRaw = signer?.signRaw;
-        if (signer && isFunction(signRaw)) {
-            const signed: SignerResult = await signRaw({
-                address: signingKey,
-                data: payloadWrappedToU8a as SignerPayloadRaw,
-                type: 'bytes'
-            })
-
-            const signature: Sr25519Signature = signed.signature as Sr25519Signature;
-            if (!signature || signature == '') {
-                console.error("blank signature");
-                return;
-            }
-            // converting to Sr25519Signature is very important, otherwise the signature length
-            // is incorrect - just using signature gives:
-            // Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
-            let proof = { Sr25519:  signed.signature as Sr25519Signature };
-            const extrinsic = singletonApi.tx.handles.claimHandle(signingKey, proof, payload);
-            let [event] = await extrinsic.signAndSend(signingKey, { signer });
-            console.log({ event });
-        }
-        else {
-            console.log({ signer });
-            console.log("signRaw isFunction? ", isFunction(signer?.signRaw));
-        }
+    if (!signature) {
+        alert("blank signature")
+        return;
     }
+    const proof = { Sr25519: signature };
+    const extrinsic = singletonApi.tx.handles.claimHandle(signingKey, proof, payload);
+
+    const event = signer ?
+        await extrinsic.signAndSend(signingKey, { signer }) :
+        await extrinsic.signAndSend(signingAccount);
+    console.log({ event });
 }
 
 

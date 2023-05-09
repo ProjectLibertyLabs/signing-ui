@@ -175,6 +175,25 @@ async function createMsa(event) {
         console.log({ chainEvent });
     }
 }
+// converting to Sr25519Signature is very important, otherwise the signature length
+// is incorrect - just using signature gives:
+// Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
+async function signPayloadWithExtension(signingAccount, signingKey, payloadWrappedToU8a) {
+    // TODO: allow signing account and MSA Owner Key to be different
+    const injector = await web3FromSource(signingAccount.meta.source);
+    const signer = injector?.signer;
+    const signRaw = signer?.signRaw;
+    let signed;
+    if (signer && isFunction(signRaw)) {
+        signed = await signRaw({
+            address: signingKey,
+            data: payloadWrappedToU8a,
+            type: 'bytes'
+        });
+    }
+    const signature = signed?.signature;
+    return [signer, signature];
+}
 // ------------------- claimHandle
 async function claimHandle(_event) {
     // get the signing key
@@ -186,42 +205,19 @@ async function claimHandle(_event) {
     const rawPayload = { baseHandle: handle_vec, expiration: currentBlock + expireWindow };
     const payload = singletonApi.registry.createType("CommonPrimitivesHandlesClaimHandlePayload", rawPayload);
     let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
-    if (providerName === 'localhost') {
-        let signature = signingAccount.sign(payloadWrappedToU8a);
-        const proof = { Sr25519: u8aToHex(signature) };
-        const extrinsic = singletonApi.tx.handles.claimHandle(signingAccount.publicKey, proof, payload);
-        const [event] = await extrinsic.signAndSend(signingAccount);
-        console.log({ event });
+    const [signer, signature] = providerName !== 'localhost' ?
+        await signPayloadWithExtension(signingAccount, signingKey, payloadWrappedToU8a) :
+        [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
+    if (!signature) {
+        alert("blank signature");
+        return;
     }
-    else {
-        // TODO: allow signing account and MSA Owner Key to be different
-        const injector = await web3FromSource(signingAccount.meta.source);
-        const signer = injector?.signer;
-        const signRaw = signer?.signRaw;
-        if (signer && isFunction(signRaw)) {
-            const signed = await signRaw({
-                address: signingKey,
-                data: payloadWrappedToU8a,
-                type: 'bytes'
-            });
-            const signature = signed.signature;
-            console.log(`signature ${signature} \n has len ${signature.length}`);
-            if (!signature || signature == '') {
-                console.error("blank signature");
-                return;
-            }
-            // just using signature gives:
-            // Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
-            let proof = { Sr25519: signature };
-            const extrinsic = singletonApi.tx.handles.claimHandle(signingKey, proof, payload);
-            let [event] = await extrinsic.signAndSend(signingKey, { signer });
-            console.log({ event });
-        }
-        else {
-            console.log({ signer });
-            console.log("signRaw isFunction? ", isFunction(signer?.signRaw));
-        }
-    }
+    const proof = { Sr25519: signature };
+    const extrinsic = singletonApi.tx.handles.claimHandle(signingKey, proof, payload);
+    const event = signer ?
+        await extrinsic.signAndSend(signingKey, { signer }) :
+        await extrinsic.signAndSend(signingAccount);
+    console.log({ event });
 }
 async function addPublicKeyToMsa(event) {
     // get the signing key
