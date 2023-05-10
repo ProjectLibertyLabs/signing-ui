@@ -77,8 +77,8 @@ function registerExtrinsicsButtonHandlers() {
         document.getElementById('createMsaButton').addEventListener("click", createMsa);
         document.getElementById('handles_claim_handle_sign_button').addEventListener("click", signClaimHandle);
         document.getElementById('handles_claim_handle_submit_button').addEventListener("click", submitClaimHandle);
-        document.getElementById('add_public_key_to_msa_sign_button').addEventListener("click", addPublicKeyToMsaSignPayload);
-        // document.getElementById('add_public_key_to_msa_submit_button').addEventListener("click", addPublicKeyToMsaSubmitExtrinsic);
+        document.getElementById('add_public_key_to_msa_sign_button').addEventListener("click", signAddPublicKeyToMsa);
+        document.getElementById('add_public_key_to_msa_submit_button').addEventListener("click", submitAddPublicKeyToMsa);
         // TODO: change to fn ptr and use a general click handler that routes to the right place
         registeredEvents['createMsaButton'] = true;
         registeredEvents['handles_claim_handle_sign_button'] = true;
@@ -99,6 +99,20 @@ async function connect(event) {
     registerExtrinsicsButtonHandlers();
     setVisibility('createMsaForm', true);
     return;
+}
+
+function populateDropdownWithAccounts(elementId: string) {
+    let accountsSelect = document.getElementById(elementId) as HTMLSelectElement;
+    Object.keys(validAccounts).forEach( key => {
+        const el = document.createElement("option") as HTMLOptionElement;
+        const a =  validAccounts[key];
+        el.setAttribute("value", a.address);
+        el.setAttribute("name", a.address);
+        el.innerText = `${a.meta.name}: ${a.address}`;
+        accountsSelect.add(el);
+    })
+
+
 }
 
 async function loadAccounts() {
@@ -136,16 +150,10 @@ async function loadAccounts() {
     }
 
     // set options in the account dropdown.
-    let accountsSelect = document.getElementById("signing-address") as HTMLSelectElement;
-    Object.keys(validAccounts).forEach( key => {
-        const el: HTMLOptionElement = document.createElement("option");
-        const a =  validAccounts[key];
-        el.setAttribute("value", a.address);
-        el.setAttribute("name", a.address);
-        el.innerText = `${a.meta.name}: ${a.address}`;
-        accountsSelect.add(el);
-    })
-
+    populateDropdownWithAccounts('signing-address')
+    populateDropdownWithAccounts('claim_handle_msaOwnerKey')
+    populateDropdownWithAccounts('add_public_key_to_msa_new_key')
+    populateDropdownWithAccounts('create_sponsored_account_with_delegation_delegator_key')
 }
 
 // resetForms puts the form state back to initial setup with first extrinsic selected and first form showing
@@ -219,7 +227,7 @@ async function submitClaimHandle(_event) {
 
 type AddKeyData = { msaId?: u64; expiration?: any; newPublicKey?: any; }
 // TODO: populate new MSA Owner key with a dropdown from available accounts
-async function addPublicKeyToMsaSignPayload(event) {
+async function signAddPublicKeyToMsa(event) {
     // get the signing key
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
@@ -241,17 +249,40 @@ async function addPublicKeyToMsaSignPayload(event) {
     ownerKeySignature = providerName !== 'localhost' ?
         await signPayloadWithExtension(signingAccount, signingKey, payload) :
         signPayloadWithKeyring(signingAccount, payload);
+    (document.getElementById('signed_payload') as HTMLTextAreaElement).value = ownerKeySignature[1];
 
     newKeySignature = providerName !== 'localhost' ?
         await signPayloadWithExtension(signingAccount, signingKey, payload) :
         signPayloadWithKeyring(newAccount, payload);
+    (document.getElementById('signed_payload2') as HTMLTextAreaElement).value = newKeySignature[1];
 
-    // const ownerKeyProof = { Sr25519: ownerKeySignature }
-    // const newKeyProof = { Sr25519: newKeySignature }
-    // const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.publicKey, ownerKeyProof, newKeyProof, payload);
-    // providerName === 'localhost' ?
-    //     await extrinsic.signAndSend(signingAccount);
-    //     await extrinsic.signAndSend(signingAccount, { signer }):
+}
+
+async function submitAddPublicKeyToMsa(_event) {
+    const signingKey = getSelectedOption('signing-address').value;
+    const signingAccount = validAccounts[signingKey];
+
+    const newKey = getHTMLInputValue('add_public_key_to_msa_new_key');
+
+    const expiration: u64 = parseInt(getHTMLInputValue('add_public_key_to_msa_expiration'));
+
+    let rawPayload: AddKeyData = {
+        msaId: getHTMLInputValue('add_public_key_to_msa_msa_id'),
+        expiration: expiration,
+        newPublicKey: newKey,
+    }
+    const payload = singletonApi.registry.createType("PalletMsaAddKeyData", rawPayload);
+
+    let ownerKeySignature = getHTMLInputValue('signed_payload')
+    let newKeySignature = getHTMLInputValue('signed_payload2');
+    const ownerKeyProof = { Sr25519: ownerKeySignature }
+    const newKeyProof = { Sr25519: newKeySignature }
+    const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.publicKey, ownerKeyProof, newKeyProof, payload);
+
+    providerName === 'localhost' ?
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+
 }
 
 function init() {
