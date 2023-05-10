@@ -11,4 +11,4 @@ Start a webserver, such as [Simple Web Server](https://simplewebserver.org/).
 Load at http://localhost:8080
 
 ## Deployment
-https://libertydsnp.github.io/balance-ui/
+https://libertydsnp.github.io/signing-ui/
