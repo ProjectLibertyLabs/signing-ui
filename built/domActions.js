@@ -11,14 +11,12 @@ function setVisibility(id, isVisible) {
 }
 function showExtrinsicForm(event) {
     event.preventDefault();
-    const selectedEl = event.target.selectedOptions[0];
-    const formToShow = selectedEl.value;
     // hide all the forms but the selected ones.
     const forms = document.getElementsByClassName("extrinsic-form");
     clearSignedPayloads();
+    const formToShow = event.target.selectedOptions[0].selectedEl.value;
     for (let i = 0; i < forms.length; i++) {
-        let form_id = forms.item(i).id;
-        setVisibility(form_id, form_id === formToShow);
+        setVisibility(forms.item(i).id, form_id === formToShow);
     }
 }
 function listenForExtrinsicsChange() {
@@ -32,13 +30,11 @@ function listenForExtrinsicsChange() {
 }
 // assumes only 1 item is selected.
 function getSelectedOption(elementId) {
-    let select = document.getElementById(elementId);
-    return select.selectedOptions[0];
+    return document.getElementById(elementId).selectedOptions[0];
 }
 // Gets the raw value from HTMLInputElement
 function getHTMLInputValue(elementId) {
-    let input = document.getElementById(elementId);
-    return input.value;
+    return document.getElementById(elementId).value;
 }
 function clearSignedPayloads() {
     document.getElementById('signed_payload').value = '';
