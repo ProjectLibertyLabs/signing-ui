@@ -68,11 +68,13 @@ async function connect(event) {
     providerName = selectedProvider.getAttribute("name");
     await loadApi(selectedProvider.getAttribute("value"));
     await loadAccounts();
-    resetForms();
     document.getElementById("setupExtrinsic").setAttribute("class", "ready");
+    setVisibility('create_msa_form', true);
+    setVisibility('extrinsics_forms', true);
+    setVisibility('payload', true);
+    resetForms();
     listenForExtrinsicsChange();
     registerExtrinsicsButtonHandlers();
-    setVisibility('createMsaForm', true);
     return;
 }
 function populateDropdownWithAccounts(elementId) {

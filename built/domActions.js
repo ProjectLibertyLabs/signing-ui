@@ -1,6 +1,12 @@
 let registeredEvents = {};
 function setVisibility(id, isVisible) {
-    const classes = isVisible ? "extrinsic-form" : "hidden extrinsic-form";
+    let classes = document.getElementById(id).getAttribute('class');
+    if (isVisible) {
+        classes = classes.split(' ').filter(c => c !== 'hidden').join(' ');
+    }
+    else {
+        classes = classes + ' hidden';
+    }
     document.getElementById(id).setAttribute("class", classes);
 }
 function showExtrinsicForm(event) {

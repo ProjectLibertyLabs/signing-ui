@@ -39,7 +39,7 @@
 
     <button type="button" id="connectButton">Connect to Node</button>
 </form>
-<form id="createMsaForm" class="hidden extrinsic-form">
+<form id="create_msa_form" class="hidden extrinsic-form">
     <p>Click to create an MSA for the selected account if you need to before submitting one of the other extrinsics.</p>
     <button type="button" id="createMsaButton">Create MSA</button>
 </form>
@@ -58,7 +58,7 @@
 </form>
 
 <div class="container">
-    <div class="extrinsics">
+    <div id='extrinsics_forms' class="hidden">
         <!-- HANDLES claim_handle -->
         <form id="handles_claim_handle" class="hidden extrinsic-form">
             <p><em>Claim Handle</em></p>
@@ -73,8 +73,6 @@
             <input id="claim_handle_expiration" placeholder="0" required>
 
             <button type="button" id="handles_claim_handle_sign_button">Sign payload</button>
-
-            <label for="handles_claim_handle_submit_button">Submit extrinsic with these values</label>
             <button type="button" id="handles_claim_handle_submit_button">Submit extrinsic</button>
         </form>
 
@@ -97,8 +95,7 @@
 
             <button type="button" id="msa_create_sponsored_account_with_delegation_sign_button">Sign payload</button>
 
-            <label for="msa_create_sponsored_account_with_delegation_submit_button">Submit extrinsic with these values</label>
-            <button type="button" id="msa_create_sponsored_account_with_delegation_submit_button">Sign and submit</button>
+            <button type="button" id="msa_create_sponsored_account_with_delegation_submit_button">Submit extrinsic</button>
 
         </form>
 
@@ -109,7 +106,9 @@
 
             <label for="grant_delegation_provider">Provider</label>
             <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
-            <button type="button" id="msa_grant_delegation_button">Sign and submit</button>
+
+            <button type="button" id="grant_delegation_sign_button">Sign payload</button>
+            <button type="button" id="grant_delegation_submit_button">Submit extrinsic</button>
         </form>
 
         <!-- MSA  add_public_key_to_msa -->
@@ -127,7 +126,6 @@
             <input id="add_public_key_to_msa_expiration" placeholder="# of blocks from now" required>
 
             <button type="button" id="add_public_key_to_msa_sign_button">Sign payload</button>
-
             <button type="button" id="add_public_key_to_msa_submit_button">Submit extrinsic</button>
         </form>
 
@@ -138,7 +136,9 @@
 
             <label for="apply_item_actions_with_signature_actions">Actions</label>
             <input id="apply_item_actions_with_signature_actions" placeholder="actions" required>
-            <button type="button" id="stateful_storage_apply_item_actions_with_signatureButton">Sign and submit</button>
+
+            <button type="button" id="apply_item_actions_with_signature_sign_button">Sign payload</button>
+            <button type="button" id="apply_item_actions_with_signature_submit_button">Submit extrinsic</button>
         </form>
 
         <!-- STATEFUL STORAGE upsert_page_with_signature -->
@@ -148,7 +148,9 @@
 
             <label for="upsert_page_with_signature_page">Page</label>
             <input id="upsert_page_with_signature_page" placeholder="page data" required>
-            <button type="button" id="stateful_storage_upsert_page_with_signatureButton">Sign and submit</button>
+
+            <button type="button" id="upsert_page_with_signature_sign_button">Sign payload</button>
+            <button type="button" id="upsert_page_with_signature_submit_button">Submit extrinsic</button>
         </form>
 
         <!-- STATEFUL STORAGE  delete_page_with_signature -->
@@ -158,15 +160,18 @@
 
             <label for="delete_page_with_signature_page">Page</label>
             <input id="delete_page_with_signature_page" placeholder="page data" required>
-            <button type="button" id="stateful_storage_delete_page_with_signatureButton">Sign and submit</button>
+
+            <button type="button" id="delete_page_with_signature_sign_button">Sign payload</button>
+            <button type="button" id="delete_page_with_signature_submit_button">Submit extrinsic</button>
         </form>
     </div>
-    <div class="payload">
+    <div id='payload' class="hidden">
         <form id="payload_signature" class="clear_on_reset disable_on_reset right">
             <label for="signed_payload">Signed Payload</label>
             <textarea id="signed_payload" disabled></textarea>
         </form>
         <form id="payload_signature2" class="clear_on_reset disable_on_reset right">
+            <p><em>For extrinsics that require two signatures</em></p>
             <label for="signed_payload2">Second Signed Payload</label>
             <textarea id="signed_payload2" disabled></textarea>
         </form>
