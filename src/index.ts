@@ -1,16 +1,13 @@
 // @ts-ignore
-import { WsProvider, ApiPromise, InjectedSigner, SubmittableResult } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
+import { WsProvider, ApiPromise } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
 // @ts-ignore
-import { web3Accounts, web3Enable, web3FromAddress, web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
+import { web3Accounts, web3Enable } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
 // @ts-ignore
-import { Bytes, EventRecord, ExtrinsicStatus, Signer, SignerResult, SignerPayloadRaw, Sr25519Signature, u64 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
-// @ts-ignore
-import { isFunction, stringToU8a, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
+import { Bytes, Signer, Sr25519Signature, u64 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { Keyring, KeyringPair } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm'
 
 import {
-    clearSignedPayload,
     getHTMLInputValue,
     getSelectedOption,
     listenForExtrinsicsChange,
@@ -18,7 +15,11 @@ import {
 } from "./domActions.js";
 
 import {
-    getBlockNumber
+    getBlockNumber,
+    signPayloadWithExtension,
+    signPayloadWithKeyring,
+    submitExtrinsicWithKeyring,
+    submitExtrinsicWithExtension,
 } from "./chainActions.js";
 
 // const Hash = interfaces.Hash;
@@ -164,32 +165,6 @@ function resetForms() {
     }
 }
 
-function parseChainEvent({ events = [], status }: { events?: EventRecord[], status: ExtrinsicStatus; }) {
-    if (status.isError) {
-        console.error("isError")
-    }  else if ( status.isFinalized || status.isInBlock ) {
-        events.forEach((eventRecord: EventRecord) => {
-            if (eventRecord.event.section === 'system') {
-                const chainEvent = eventRecord.event.toHuman();
-                if (chainEvent.method === 'ExtrinsicSuccess') {
-                    alert('Transaction succeeded');
-                } else if (chainEvent.method === 'ExtrinsicFailed') {
-                    alert(`Transaction failed with error: ${chainEvent.data.dispatchError.Module.error}`);
-                }
-            }
-        })
-    }
-}
-
-async function submitExtrinsicWithExtension(extrinsic: any, signingAccount: Signer, signingKey: string): Promise<void> {
-    const injector = await web3FromSource(signingAccount.meta.source);
-    await extrinsic.signAndSend(signingKey, {signer: injector.signer}, parseChainEvent );
-}
-
-async function submitExtrinsicWithKeyring(extrinsic, signingAccount: KeyringPair): Promise<void> {
-    await extrinsic.signAndSend(signingAccount, parseChainEvent );
-}
-
 // createMSA
 async function createMsa(event) {
     event.preventDefault();
@@ -203,25 +178,6 @@ async function createMsa(event) {
 }
 
 
-// converting to Sr25519Signature is very important, otherwise the signature length
-// is incorrect - just using signature gives:
-// Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
-async function signPayloadWithExtension(signingAccount: Signer, signingKey: string, payloadWrappedToU8a): Promise<Sr25519Signature>{
-    // TODO: allow signing account and MSA Owner Key to be different
-    const injector = await web3FromSource(signingAccount.meta.source);
-    const signer = injector?.signer;
-    const signRaw = signer?.signRaw;
-    let signed: SignerResult;
-    if (signer && isFunction(signRaw)) {
-        signed = await signRaw({
-            address: signingKey,
-            data: payloadWrappedToU8a as SignerPayloadRaw,
-            type: 'bytes'
-        })
-    }
-    return signed?.signature as Sr25519Signature;
-}
-
 // ------------------- signClaimHandle
 async function signClaimHandle(_event) {
     // get the signing key
@@ -233,11 +189,10 @@ async function signClaimHandle(_event) {
 
     const rawPayload = { baseHandle: handle_vec,  expiration: expiration }
     const payload = singletonApi.registry.createType("CommonPrimitivesHandlesClaimHandlePayload", rawPayload);
-    let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
 
     const signature: Sr25519Signature = providerName !== 'localhost' ?
-        await signPayloadWithExtension(signingAccount, signingKey, payloadWrappedToU8a) :
-        [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
+        await signPayloadWithExtension(signingAccount, signingKey, payload) :
+        signPayloadWithKeyring(signingAccount, payload);
 
     if (!signature) { alert("blank signature"); return; }
     let signatureEl = document.getElementById('signed_payload') as HTMLTextAreaElement;
@@ -280,27 +235,23 @@ async function addPublicKeyToMsaSignPayload(event) {
         newPublicKey: newKey,
     }
     const payload = singletonApi.registry.createType("PalletMsaAddKeyData", rawPayload);
-    const payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
-    let signer: Signer;
     let ownerKeySignature: Sr25519Signature;
     let newKeySignature: Sr25519Signature;
 
-    [signer, ownerKeySignature] = providerName !== 'localhost' ?
-        await signPayloadWithExtension(signingAccount, signingKey, payloadWrappedToU8a) :
-        [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
+    ownerKeySignature = providerName !== 'localhost' ?
+        await signPayloadWithExtension(signingAccount, signingKey, payload) :
+        signPayloadWithKeyring(signingAccount, payload);
 
-    [signer, newKeySignature] = providerName !== 'localhost' ?
-        await signPayloadWithExtension(signingAccount, signingKey, payloadWrappedToU8a) :
-        [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
+    newKeySignature = providerName !== 'localhost' ?
+        await signPayloadWithExtension(signingAccount, signingKey, payload) :
+        signPayloadWithKeyring(newAccount, payload);
 
-    const ownerKeyProof = { Sr25519: ownerKeySignature }
-    const newKeyProof = { Sr25519: newKeySignature }
-    const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.publicKey, ownerKeyProof, newKeyProof, payload);
-    const [chainEvent] = signer ?
-        await extrinsic.signAndSend(signingAccount, { signer }):
-        await extrinsic.signAndSend(signingAccount);
-    console.log({chainEvent})
-
+    // const ownerKeyProof = { Sr25519: ownerKeySignature }
+    // const newKeyProof = { Sr25519: newKeySignature }
+    // const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.publicKey, ownerKeyProof, newKeyProof, payload);
+    // providerName === 'localhost' ?
+    //     await extrinsic.signAndSend(signingAccount);
+    //     await extrinsic.signAndSend(signingAccount, { signer }):
 }
 
 function init() {
