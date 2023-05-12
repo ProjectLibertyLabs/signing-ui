@@ -6,7 +6,7 @@ import { web3Accounts, web3Enable } from 'https://cdn.jsdelivr.net/npm/@polkadot
 import { Bytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { Keyring } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm';
-import { getHTMLInputValue, getSelectedOption, listenForExtrinsicsChange, setVisibility, } from "./domActions.js";
+import { getHTMLInputValue, getSelectedOption, listenForExtrinsicsChange, setVisibility, clearFormInvalid, validateForm, } from "./domActions.js";
 import { getBlockNumber, signPayloadWithExtension, signPayloadWithKeyring, submitExtrinsicWithKeyring, submitExtrinsicWithExtension, } from "./chainActions.js";
 // const Hash = interfaces.Hash;
 let PREFIX = 42;
@@ -16,6 +16,24 @@ let singletonProvider;
 let providerName;
 let validAccounts = {};
 let registeredEvents = {};
+//  map of form submit button ids to event handlers.
+let formListeners = {
+    'create_msa_button': createMsa,
+    'handles_claim_handle_sign_button': signClaimHandle,
+    'handles_claim_handle_submit_button': submitClaimHandle,
+    'msa_create_sponsored_account_with_delegation_sign_button': signCreateSponsoredAccountWithDelegation,
+    'msa_create_sponsored_account_with_delegation_submit_button': submitCreateSponsoredAccountWithDelegation,
+    'msa_grant_delegation_sign_button': signGrantDelegation,
+    'msa_grant_delegation_submit_button': submitGrantDelegation,
+    'add_public_key_to_msa_sign_button': signAddPublicKeyToMsa,
+    'add_public_key_to_msa_submit_button': submitAddPublicKeyToMsa,
+    'apply_item_actions_with_signature_sign_button': signApplyItemActionsWithSignature,
+    'apply_item_actions_with_signature_submit_button': submitApplyItemActionsWithSignature,
+    'upsert_page_with_signature_sign_button': signUpsertPageWithSignature,
+    'upsert_page_with_signature_submit_button': submitUpsertPageWithSignature,
+    'delete_page_with_signature_sign_button': signDeletePageWithSignature,
+    'delete_page_with_signature_submit_button': submitDeletePageWithSignature,
+};
 const GENESIS_HASHES = {
     rococo: "0x0c33dfffa907de5683ae21cc6b4af899b5c4de83f3794ed75b2dc74e1b088e72",
     frequency: "0x4a587bf17a404e3572747add7aab7bbe56e805a5479c6c436f07f36fcc8d3ae1",
@@ -49,16 +67,11 @@ async function loadApi(providerUri) {
     document.getElementById("current-block").innerHTML = blockNumber.toString();
 }
 function registerExtrinsicsButtonHandlers() {
-    if (!registeredEvents['createMsaButton']) {
-        document.getElementById('createMsaButton').addEventListener("click", createMsa);
-        document.getElementById('handles_claim_handle_sign_button').addEventListener("click", signClaimHandle);
-        document.getElementById('handles_claim_handle_submit_button').addEventListener("click", submitClaimHandle);
-        document.getElementById('add_public_key_to_msa_sign_button').addEventListener("click", signAddPublicKeyToMsa);
-        document.getElementById('add_public_key_to_msa_submit_button').addEventListener("click", submitAddPublicKeyToMsa);
-        // TODO: change to fn ptr and use a general click handler that routes to the right place
-        registeredEvents['createMsaButton'] = true;
-        registeredEvents['handles_claim_handle_sign_button'] = true;
-        registeredEvents['add_public_key_to_msa_sign_button'] = true;
+    if (!registeredEvents['extrinsicsButtons']) {
+        Object.keys(formListeners).forEach(elementId => {
+            document.getElementById(elementId).addEventListener('click', formListeners[elementId]);
+        });
+        registeredEvents['extrinsicsButtons'] = true;
     }
 }
 // Connect to the wallet and blockchain
@@ -104,7 +117,7 @@ async function loadAccounts() {
     if (providerName === "localhost") {
         const keyring = new Keyring({ type: 'sr25519' });
         // Add Alice to our keyring with a hard-derivation path (empty phrase, so uses dev)
-        ['//Alice', '//Bob', '//Charlie', '//Dave'].forEach(accountName => {
+        ['//Alice', '//Bob', '//Charlie', '//Dave', '//Eve', '//Ferdie'].forEach(accountName => {
             let account = keyring.addFromUri(accountName);
             account.meta.name = accountName;
             validAccounts[account.address] = account;
@@ -113,7 +126,6 @@ async function loadAccounts() {
     else {
         allAccounts.forEach(a => {
             // display only the accounts allowed for this chain
-            // TODO: add Alice..Ferdie accounts if localhost. add everything for localhost for now
             if (!a.meta.genesisHash
                 || GENESIS_HASHES[providerName] === a.meta.genesisHash) {
                 validAccounts[a.address] = a;
@@ -154,10 +166,18 @@ async function createMsa(event) {
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
 }
 // ------------------- signClaimHandle
-async function signClaimHandle(_event) {
+async function signClaimHandle(event) {
+    const formId = 'handles_claim_handle';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
     // get the signing key
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
+    // TODO: allow to claim handle by other account
+    const msaOwnerKey = getSelectedOption('claim_handle_msaOwnerKey').value;
+    const msaOwnerAccount = validAccounts[msaOwnerKey];
     const handle_vec = new Bytes(singletonApi.registry, getHTMLInputValue('claim_handle_handle'));
     const expiration = parseInt(getHTMLInputValue('claim_handle_expiration'), 10);
     const rawPayload = { baseHandle: handle_vec, expiration: expiration };
@@ -165,14 +185,15 @@ async function signClaimHandle(_event) {
     const signature = providerName !== 'localhost' ?
         await signPayloadWithExtension(signingAccount, signingKey, payload) :
         signPayloadWithKeyring(signingAccount, payload);
-    if (!signature) {
-        alert("blank signature");
-        return;
-    }
     let signatureEl = document.getElementById('signed_payload');
-    signatureEl.value = signature[1];
+    signatureEl.value = signature;
 }
 async function submitClaimHandle(_event) {
+    const formId = 'handles_claim_handle';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
     const signature = getHTMLInputValue('signed_payload');
@@ -188,6 +209,11 @@ async function submitClaimHandle(_event) {
 }
 // TODO: populate new MSA Owner key with a dropdown from available accounts
 async function signAddPublicKeyToMsa(event) {
+    const formId = 'msa_add_public_key_to_msa';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
     // get the signing key
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
@@ -205,13 +231,18 @@ async function signAddPublicKeyToMsa(event) {
     ownerKeySignature = providerName !== 'localhost' ?
         await signPayloadWithExtension(signingAccount, signingKey, payload) :
         signPayloadWithKeyring(signingAccount, payload);
-    document.getElementById('signed_payload').value = ownerKeySignature[1];
+    document.getElementById('signed_payload').value = ownerKeySignature;
     newKeySignature = providerName !== 'localhost' ?
         await signPayloadWithExtension(signingAccount, signingKey, payload) :
         signPayloadWithKeyring(newAccount, payload);
-    document.getElementById('signed_payload2').value = newKeySignature[1];
+    document.getElementById('signed_payload2').value = newKeySignature;
 }
 async function submitAddPublicKeyToMsa(_event) {
+    const formId = 'msa_add_public_key_to_msa';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
     const newKey = getHTMLInputValue('add_public_key_to_msa_new_key');
@@ -230,6 +261,107 @@ async function submitAddPublicKeyToMsa(_event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount) :
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+}
+async function signCreateSponsoredAccountWithDelegation(_event) {
+    const formId = 'msa_create_sponsored_account_with_delegation';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+    const delegatorKey = getHTMLInputValue('create_sponsored_account_with_delegation_delegator_key');
+    const delegatorAccount = validAccounts[delegatorKey];
+    const authorizedMsaId = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_provider'));
+    const expiration = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_expiration'));
+    const schemaIds = getHTMLInputValue('create_sponsored_account_with_delegation_schema_ids')
+        .split(/,\s+?/)
+        .map(item => parseInt(item));
+    const rawPayload = { authorizedMsaId, expiration, schemaIds };
+    const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
+    const signature = providerName == 'localhost' ?
+        signPayloadWithKeyring(delegatorAccount, payload) :
+        await signPayloadWithExtension(delegatorAccount, delegatorKey, payload);
+    let signatureEl = document.getElementById('signed_payload');
+    signatureEl.value = signature;
+}
+async function submitCreateSponsoredAccountWithDelegation(_event) {
+    const formId = 'msa_create_sponsored_account_with_delegation';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+    // get the signing key
+    const signingKey = getSelectedOption('signing-address').value;
+    const signingAccount = validAccounts[signingKey];
+    const delegatorKey = getHTMLInputValue('create_sponsored_account_with_delegation_delegator_key');
+    const authorizedMsaId = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_provider'));
+    const expiration = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_expiration'));
+    const schemaIds = getHTMLInputValue('create_sponsored_account_with_delegation_schema_ids')
+        .split(/,\s+?/)
+        .map(item => parseInt(item));
+    const signature = getHTMLInputValue('signed_payload');
+    const proof = { Sr25519: signature };
+    const rawPayload = { authorizedMsaId, expiration, schemaIds };
+    const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
+    const extrinsic = singletonApi.tx.msa.createSponsoredAccountWithDelegation(delegatorKey, proof, payload);
+    providerName === 'localhost' ?
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount) :
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+}
+async function signGrantDelegation(_event) {
+    const formId = 'msa_grant_delegation';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function submitGrantDelegation(_event) {
+    const formId = 'msa_grant_delegation';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function signApplyItemActionsWithSignature(_event) {
+    const formId = 'stateful_storage_apply_item_actions_with_signature';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function submitApplyItemActionsWithSignature(_event) {
+    const formId = 'stateful_storage_apply_item_actions_with_signature';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function signUpsertPageWithSignature(_event) {
+    const formId = 'stateful_storage_upsert_page_with_signature';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function submitUpsertPageWithSignature(_event) {
+    const formId = 'stateful_storage_upsert_page_with_signature';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function signDeletePageWithSignature(_event) {
+    const formId = 'stateful_storage_delete_page_with_signature';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
+}
+async function submitDeletePageWithSignature(_event) {
+    const formId = 'stateful_storage_delete_page_with_signature';
+    if (!validateForm(formId)) {
+        return;
+    }
+    clearFormInvalid(formId);
 }
 function init() {
     document.getElementById("connectButton").addEventListener("click", connect);

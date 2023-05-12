@@ -20,6 +20,10 @@
         .payload form textarea {
             height: 100px;
         }
+        .invalid {
+            border-color: red;
+            border-width: 2px;
+        }
 
     </style>
 </head>
@@ -41,7 +45,7 @@
 </form>
 <form id="create_msa_form" class="hidden extrinsic-form">
     <p>Click to create an MSA for the selected account if you need to before submitting one of the other extrinsics.</p>
-    <button type="button" id="createMsaButton">Create MSA</button>
+    <button type="button" id="create_msa_button">Create MSA</button>
 </form>
 
 <form id="setupExtrinsic" class="hidden">
@@ -94,7 +98,6 @@
             <input id="create_sponsored_account_with_delegation_expiration" placeholder="0" required>
 
             <button type="button" id="msa_create_sponsored_account_with_delegation_sign_button">Sign payload</button>
-
             <button type="button" id="msa_create_sponsored_account_with_delegation_submit_button">Submit extrinsic</button>
 
         </form>
@@ -107,8 +110,8 @@
             <label for="grant_delegation_provider">Provider</label>
             <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
 
-            <button type="button" id="grant_delegation_sign_button">Sign payload</button>
-            <button type="button" id="grant_delegation_submit_button">Submit extrinsic</button>
+            <button type="button" id="msa_grant_delegation_sign_button">Sign payload</button>
+            <button type="button" id="msa_grant_delegation_submit_button">Submit extrinsic</button>
         </form>
 
         <!-- MSA  add_public_key_to_msa -->

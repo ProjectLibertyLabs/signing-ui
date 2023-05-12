@@ -43,15 +43,18 @@ async function signPayloadWithExtension(signingAccount, signingKey, payload) {
     if (signer && isFunction(signRaw)) {
         let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
         signed = await signRaw({
-            address: signingKey,
+            address: signer,
             data: payloadWrappedToU8a,
             type: 'bytes'
         });
     }
     return signed?.signature;
 }
+// returns a properly formatted signature to submit with an extrinsic
 function signPayloadWithKeyring(signingAccount, payload) {
-    let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
-    return [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
+    return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
 }
-export { getBlockNumber, signPayloadWithExtension, signPayloadWithKeyring, submitExtrinsicWithKeyring, submitExtrinsicWithExtension, };
+function wrapToU8a(payload) {
+    return u8aWrapBytes(payload.toU8a());
+}
+export { getBlockNumber, signPayloadWithExtension, signPayloadWithKeyring, submitExtrinsicWithKeyring, submitExtrinsicWithExtension, wrapToU8a, };

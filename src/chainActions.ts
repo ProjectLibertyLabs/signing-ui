@@ -55,7 +55,7 @@ async function signPayloadWithExtension(signingAccount: Signer, signingKey: stri
         let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
 
         signed = await signRaw({
-            address: signingKey,
+            address: signer,
             data: payloadWrappedToU8a as SignerPayloadRaw,
             type: 'bytes'
         })
@@ -63,10 +63,13 @@ async function signPayloadWithExtension(signingAccount: Signer, signingKey: stri
     return signed?.signature as Sr25519Signature;
 }
 
-function signPayloadWithKeyring(signingAccount: Keyring, payload: any) {
-    let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
+// returns a properly formatted signature to submit with an extrinsic
+function signPayloadWithKeyring(signingAccount: Keyring, payload: any): string {
+    return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
+}
 
-    return [null, u8aToHex(signingAccount.sign(payloadWrappedToU8a))];
+function wrapToU8a(payload: any): Uint8Array {
+    return u8aWrapBytes(payload.toU8a())
 }
 
 export {
@@ -75,5 +78,6 @@ export {
     signPayloadWithKeyring,
     submitExtrinsicWithKeyring,
     submitExtrinsicWithExtension,
+    wrapToU8a,
 }
 

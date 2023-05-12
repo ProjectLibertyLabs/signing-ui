@@ -46,11 +46,38 @@ function clearSignedPayloads() {
    ( document.getElementById('signed_payload2') as HTMLTextAreaElement).value = '';
 }
 
+function validateForm(formId: string): boolean {
+    let form = document.getElementById(formId);
+    let inputs = form.getElementsByTagName('input');
+    let formValid = true;
+    for (let i=0; i< inputs.length; i++) {
+        let input = inputs[i] as HTMLInputElement;
+        if (input.required && input.value === '') {
+            input.setAttribute('class', 'invalid');
+            formValid = false;
+        }
+    }
+    if (!formValid) {
+        alert("Please fill out all form items");
+    }
+    return formValid;
+}
+
+function clearFormInvalid(formId: string) {
+    let form = document.getElementById(formId);
+    let inputs = form.getElementsByTagName('input');
+    for (let i=0; i< inputs.length; i++) {
+        inputs[i].setAttribute('class', '')
+    }
+}
+
 export {
+    clearFormInvalid,
     clearSignedPayloads,
     getHTMLInputValue,
     getSelectedOption,
     listenForExtrinsicsChange,
-    setVisibility
+    setVisibility,
+    validateForm,
 };
 

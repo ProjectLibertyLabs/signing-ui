@@ -11,12 +11,12 @@ function setVisibility(id, isVisible) {
 }
 function showExtrinsicForm(event) {
     event.preventDefault();
-    // hide all the forms but the selected ones.
-    const forms = document.getElementsByClassName("extrinsic-form");
     clearSignedPayloads();
-    const formToShow = event.target.selectedOptions[0].selectedEl.value;
+    const formToShow = event.target.selectedOptions[0].value;
+    const forms = document.getElementsByClassName("extrinsic-form");
     for (let i = 0; i < forms.length; i++) {
-        setVisibility(forms.item(i).id, form_id === formToShow);
+        let form_id = forms.item(i).id;
+        setVisibility(form_id, form_id === formToShow);
     }
 }
 function listenForExtrinsicsChange() {
@@ -40,4 +40,27 @@ function clearSignedPayloads() {
     document.getElementById('signed_payload').value = '';
     document.getElementById('signed_payload2').value = '';
 }
-export { clearSignedPayloads, getHTMLInputValue, getSelectedOption, listenForExtrinsicsChange, setVisibility };
+function validateForm(formId) {
+    let form = document.getElementById(formId);
+    let inputs = form.getElementsByTagName('input');
+    let formValid = true;
+    for (let i = 0; i < inputs.length; i++) {
+        let input = inputs[i];
+        if (input.required && input.value === '') {
+            input.setAttribute('class', 'invalid');
+            formValid = false;
+        }
+    }
+    if (!formValid) {
+        alert("Please fill out all form items");
+    }
+    return formValid;
+}
+function clearFormInvalid(formId) {
+    let form = document.getElementById(formId);
+    let inputs = form.getElementsByTagName('input');
+    for (let i = 0; i < inputs.length; i++) {
+        inputs[i].setAttribute('class', '');
+    }
+}
+export { clearFormInvalid, clearSignedPayloads, getHTMLInputValue, getSelectedOption, listenForExtrinsicsChange, setVisibility, validateForm, };
