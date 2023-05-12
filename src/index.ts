@@ -169,10 +169,13 @@ async function loadAccounts() {
     }
 
     // set options in the account dropdown.
-    populateDropdownWithAccounts('signing-address')
-    populateDropdownWithAccounts('claim_handle_msaOwnerKey')
-    populateDropdownWithAccounts('add_public_key_to_msa_new_key')
-    populateDropdownWithAccounts('create_sponsored_account_with_delegation_delegator_key')
+    [
+        'signing-address',
+        'claim_handle_msaOwnerKey',
+        'add_public_key_to_msa_new_key',
+        'create_sponsored_account_with_delegation_delegator_key',
+        'grant_delegation_delegator_key'
+    ].forEach(selectId => populateDropdownWithAccounts(selectId))
 }
 
 // resetForms puts the form state back to initial setup with first extrinsic selected and first form showing
@@ -380,12 +383,54 @@ async function signGrantDelegation(_event) {
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
 
+    const delegatorKey = getHTMLInputValue('grant_delegation_delegator_key');
+    const delegatorAccount = validAccounts[delegatorKey];
+
+    const authorizedMsaId = parseInt(getHTMLInputValue('grant_delegation_provider'));
+    const expiration: u64 = parseInt(getHTMLInputValue('grant_delegation_expiration'));
+    const schemaIds: u16[] = getHTMLInputValue('grant_delegation_schema_ids')
+        .split(/,\s+?/)
+        .map(item => parseInt(item) as u64);
+
+    const rawPayload: AddProviderPayload = { authorizedMsaId, expiration, schemaIds }
+    const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
+
+    const signature: Sr25519Signature = providerName == 'localhost' ?
+        signPayloadWithKeyring(delegatorAccount, payload) :
+        await signPayloadWithExtension(delegatorAccount, delegatorKey, payload)
+
+    let signatureEl = document.getElementById('signed_payload') as HTMLTextAreaElement;
+    signatureEl.value = signature;
 }
 
 async function submitGrantDelegation(_event) {
     const formId = 'msa_grant_delegation';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    // get the signing key
+    const signingKey = getSelectedOption('signing-address').value;
+    const signingAccount = validAccounts[signingKey];
+
+    const delegatorKey = getHTMLInputValue('grant_delegation_delegator_key');
+
+    const authorizedMsaId = parseInt(getHTMLInputValue('grant_delegation_provider'));
+    const expiration: u64 = parseInt(getHTMLInputValue('grant_delegation_expiration'));
+    const schemaIds: u16[] = getHTMLInputValue('grant_delegation_schema_ids')
+        .split(/,\s+?/)
+        .map(item => parseInt(item) as u64);
+
+    const rawPayload: AddProviderPayload = { authorizedMsaId, expiration, schemaIds }
+    const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
+
+    const signature = getHTMLInputValue('signed_payload');
+    const proof = { Sr25519: signature };
+
+    const extrinsic = singletonApi.tx.msa.grantDelegation(delegatorKey, proof, payload)
+
+    providerName === 'localhost' ?
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
 
 }
 

@@ -107,8 +107,17 @@
             <p><em>msa.grant_delegation</em></p>
             <p>Prerequisite: Create MSA, Provider must be created</p>
 
+            <label for="grant_delegation_delegator_key">Delegator Key (AccountId32)</label>
+            <select id="grant_delegation_delegator_key" required></select>
+
             <label for="grant_delegation_provider">Provider</label>
             <input id="grant_delegation_provider" placeholder="provider MSA Id" required>
+
+            <label for="grant_delegation_schema_ids">Schema Ids</label>
+            <input id="grant_delegation_schema_ids" placeholder="e.g. 1,2,3" required>
+
+            <label for="grant_delegation_expiration">Expiration (blocks)</label>
+            <input id="grant_delegation_expiration" placeholder="0" required>
 
             <button type="button" id="msa_grant_delegation_sign_button">Sign payload</button>
             <button type="button" id="msa_grant_delegation_submit_button">Submit extrinsic</button>
