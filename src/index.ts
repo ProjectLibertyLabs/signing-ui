@@ -18,11 +18,19 @@ import {
 
 import {
     getBlockNumber,
+    getCurrentItemizedHash,
+    getCurrentPaginatedHash,
     signPayloadWithExtension,
     signPayloadWithKeyring,
     submitExtrinsicWithKeyring,
     submitExtrinsicWithExtension,
 } from "./chainActions.js";
+import {ItemizedSignaturePayload} from "./types.js";
+
+import { StatefulStorageRpc } from "./statefulStorageRpcTypes.js";
+
+const getPaginatedStorage = StatefulStorageRpc.rpc.getPaginatedStorage;
+const getItemizedStorage = StatefulStorageRpc.rpc.getItemizedStorage;
 
 // const Hash = interfaces.Hash;
 
@@ -56,6 +64,7 @@ let formListeners: Record<string, EventHandler> = {
     'upsert_page_with_signature_submit_button': submitUpsertPageWithSignature,
     'delete_page_with_signature_sign_button': signDeletePageWithSignature,
     'delete_page_with_signature_submit_button': submitDeletePageWithSignature,
+
 };
 
 const GENESIS_HASHES = {
@@ -72,7 +81,6 @@ async function loadApi(providerUri) {
     }
     // Handle disconnects
     if (providerUri) {
-
         if (singletonApi) {
             await singletonApi.disconnect();
         } else if (singletonProvider) {
@@ -82,7 +90,16 @@ async function loadApi(providerUri) {
 
     // Singleton Provider because it starts trying to connect here.
     singletonProvider = new WsProvider(providerUri);
-    singletonApi = await ApiPromise.create({provider: singletonProvider});
+    singletonApi = await ApiPromise.create({
+        provider: singletonProvider,
+        rpc: {
+            statefulStorage: {
+                getItemizedStorage,
+                getPaginatedStorage,
+            }
+        },
+        types: StatefulStorageRpc.types,
+    });
 
     await singletonApi.isReady;
     const chain = await singletonApi.rpc.system.properties();
@@ -174,7 +191,8 @@ async function loadAccounts() {
         'claim_handle_msaOwnerKey',
         'add_public_key_to_msa_new_key',
         'create_sponsored_account_with_delegation_delegator_key',
-        'grant_delegation_delegator_key'
+        'grant_delegation_delegator_key',
+        'apply_item_actions_with_signature_delegator_key'
     ].forEach(selectId => populateDropdownWithAccounts(selectId))
 }
 
@@ -220,8 +238,8 @@ async function signClaimHandle(event) {
     const signingAccount = validAccounts[signingKey];
 
     // TODO: allow to claim handle by other account
-    const msaOwnerKey = getSelectedOption('claim_handle_msaOwnerKey').value;
-    const msaOwnerAccount = validAccounts[msaOwnerKey];
+    // const msaOwnerKey = getSelectedOption('claim_handle_msaOwnerKey').value;
+    // const msaOwnerAccount = validAccounts[msaOwnerKey];
 
     const handle_vec = new Bytes(singletonApi.registry, getHTMLInputValue('claim_handle_handle'));
     const expiration = parseInt(getHTMLInputValue('claim_handle_expiration'), 10);
@@ -312,10 +330,8 @@ async function submitAddPublicKeyToMsa(_event) {
     }
     const payload = singletonApi.registry.createType("PalletMsaAddKeyData", rawPayload);
 
-    let ownerKeySignature = getHTMLInputValue('signed_payload')
-    let newKeySignature = getHTMLInputValue('signed_payload2');
-    const ownerKeyProof = { Sr25519: ownerKeySignature }
-    const newKeyProof = { Sr25519: newKeySignature }
+    const ownerKeyProof = { Sr25519: getHTMLInputValue('signed_payload') }
+    const newKeyProof = { Sr25519: getHTMLInputValue('signed_payload2') }
     const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.publicKey, ownerKeyProof, newKeyProof, payload);
 
     providerName === 'localhost' ?
@@ -364,10 +380,7 @@ async function submitCreateSponsoredAccountWithDelegation(_event) {
         .split(/,\s+?/)
         .map(item => parseInt(item) as u64);
 
-
-    const signature = getHTMLInputValue('signed_payload');
-
-    const proof = { Sr25519: signature };
+    const proof = { Sr25519: getHTMLInputValue('signed_payload') };
     const rawPayload: AddProviderPayload = { authorizedMsaId, expiration, schemaIds }
     const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
 
@@ -423,8 +436,7 @@ async function submitGrantDelegation(_event) {
     const rawPayload: AddProviderPayload = { authorizedMsaId, expiration, schemaIds }
     const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
 
-    const signature = getHTMLInputValue('signed_payload');
-    const proof = { Sr25519: signature };
+    const proof = { Sr25519: getHTMLInputValue('signed_payload') };
 
     const extrinsic = singletonApi.tx.msa.grantDelegation(delegatorKey, proof, payload)
 
@@ -434,22 +446,84 @@ async function submitGrantDelegation(_event) {
 
 }
 
+async function getApplyItemActionsWithSignatureFormData(): Promise<[string, any, ItemizedSignaturePayload]> {
+    const delegatorKey = getHTMLInputValue('apply_item_actions_with_signature_delegator_key');
+    const delegatorAccount = validAccounts[delegatorKey];
+
+    const delegatorMsaId = parseInt(getHTMLInputValue('apply_item_actions_with_signature_delegator_msa'));
+    const itemizedSchemaId = parseInt(getHTMLInputValue('apply_item_actions_with_signature_schema_id'));
+    const payload1 = new Bytes(singletonApi.registry, getHTMLInputValue('apply_item_actions_with_signature_actions1'));
+    const payload2 = new Bytes(singletonApi.registry, getHTMLInputValue('apply_item_actions_with_signature_actions2'));
+    const expiration = parseInt(getHTMLInputValue('apply_item_actions_with_signature_expiration'));
+
+    const targetHash = await getCurrentItemizedHash(singletonApi, delegatorMsaId, itemizedSchemaId);
+    const addActions = [{"Add": payload1}, {"Add": payload2}];
+    const rawPayload: ItemizedSignaturePayload = {
+        msaId: delegatorMsaId,
+        targetHash: targetHash,
+        schemaId: itemizedSchemaId,
+        actions: addActions,
+        expiration,
+    };
+    const payload = singletonApi.registry.createType("PalletStatefulStorageItemizedSignaturePayload", rawPayload);
+    return [delegatorKey, delegatorAccount, payload];
+}
+
 async function signApplyItemActionsWithSignature(_event) {
     const formId = 'stateful_storage_apply_item_actions_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+    const [delegatorKey, delegatorAccount, payload] = await getApplyItemActionsWithSignatureFormData();
+
+    const signature: Sr25519Signature = providerName == 'localhost' ?
+        signPayloadWithKeyring(delegatorAccount, payload) :
+        await signPayloadWithExtension(delegatorAccount, delegatorKey, payload)
+
+    let signatureEl = document.getElementById('signed_payload') as HTMLTextAreaElement;
+    signatureEl.value = signature;
 }
 
 async function submitApplyItemActionsWithSignature(_event) {
     const formId = 'stateful_storage_apply_item_actions_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    const [delegatorKey, _delegatorAccount, payload] = await getApplyItemActionsWithSignatureFormData();
+
+    const proof = { Sr25519: getHTMLInputValue('signed_payload') };
+
+    const extrinsic = singletonApi.tx.msa.grantDelegation(delegatorKey, proof, payload)
+
+    const signingKey = getSelectedOption('signing-address').value;
+    const signingAccount = validAccounts[signingKey];
+
+    providerName === 'localhost' ?
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
 }
 
 async function signUpsertPageWithSignature(_event) {
     const formId = 'stateful_storage_upsert_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    const delegatorKey = getHTMLInputValue('apply_item_actions_with_signature_delegator_key');
+    const delegatorMsaId = parseInt(getHTMLInputValue('apply_item_actions_with_signature_delegator_msa'));
+    const itemizedSchemaId = parseInt(getHTMLInputValue('apply_item_actions_with_signature_schema_id'));
+    const payload1 = getHTMLInputValue('apply_item_actions_with_signature_actions1');
+    const payload2 = getHTMLInputValue('apply_item_actions_with_signature_actions2')
+    const expiration = parseInt(getHTMLInputValue('apply_item_actions_with_signature_expiration'));
+
+    const targetHash = await getCurrentItemizedHash(singletonApi, delegatorMsaId, itemizedSchemaId);
+    const addActions = [{ "Add": payload1}, {"Add": payload2}];
+    const rawPayload: ItemizedSignaturePayload = {
+        msaId: delegatorMsaId,
+        targetHash: targetHash,
+        schemaId: itemizedSchemaId,
+        actions: addActions,
+        expiration,
+    };
+    const payload = singletonApi.registry.createType("PalletStatefulStorageItemizedSignaturePayload", rawPayload);
 }
 async function submitUpsertPageWithSignature(_event) {
     const formId = 'stateful_storage_upsert_page_with_signature';

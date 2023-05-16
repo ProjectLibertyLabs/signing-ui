@@ -3,11 +3,14 @@ import { web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension
 // @ts-ignore
 import { ApiPromise } from 'https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm';
 // @ts-ignore
-import { EventRecord, ExtrinsicStatus, Signer, SignerResult, SignerPayloadRaw, Sr25519Signature } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+import { EventRecord, ExtrinsicStatus, Signer, SignerResult, SignerPayloadRaw, Sr25519Signature, u16, u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { Keyring, KeyringPair } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm'
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes} from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
+
+
+import {MessageSourceId, PageId, PaginatedStorageResponse} from "./types.js";
 
 
 async function getBlockNumber(api: ApiPromise): Promise<number> {
@@ -66,6 +69,32 @@ async function signPayloadWithExtension(signingAccount: Signer, signingKey: stri
 // returns a properly formatted signature to submit with an extrinsic
 function signPayloadWithKeyring(signingAccount: Keyring, payload: any): string {
     return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
+}
+
+async function getPaginatedStorage(api: ApiPromise, msaId: MessageSourceId, schemaId: u16): Promise<Array<PaginatedStorageResponse>> {
+    let result: Array<PaginatedStorageResponse> = await api.rpc.statefulStorage.getPaginatedStorage(msaId, schemaId);
+    console.log({result});
+    return result;
+}
+
+export async function getCurrentPaginatedHash(api: ApiPromise, msaId: number, schemaId: number, page_id: number): Promise<u32> {
+    const result = await getPaginatedStorage(api, msaId, schemaId);
+    let realPageId = page_id as PageId;
+    const page_response = result.filter((page) => page.page_id === realPageId);
+    if (page_response.length <= 0) {
+        return new u32(api.registry, 0);
+    }
+
+    return page_response[0].content_hash;
+}
+
+export async function getCurrentItemizedHash(api: ApiPromise, msaId: number, schemaId: number): Promise<u32> {
+    const result = await api.rpc.statefulStorage.getItemizedStorage(msaId, schemaId);
+    return result.content_hash;
+}
+
+export async function createItemizedSignaturePayload(rawPayload: any) {
+
 }
 
 function wrapToU8a(payload: any): Uint8Array {
