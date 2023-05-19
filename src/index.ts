@@ -469,11 +469,11 @@ async function getApplyItemActionsWithSignatureFormData(): Promise<[string, any,
 
     let p2 = getHTMLInputValue('apply_item_actions_with_signature_actions2');
     console.log({p2});
-    const payload2 = new Bytes(singletonApi.registry, "S");
+    const payload2 = new Bytes(singletonApi.registry, p2);
 
     const expiration = parseInt(getHTMLInputValue('apply_item_actions_with_signature_expiration'));
     const targetHash = await getCurrentItemizedHash(singletonApi, delegatorMsaId, itemizedSchemaId);
-    const addActions = [{Add: payload1}];
+    const addActions = [{Add: payload1},{Add: payload2}];
     const rawPayload = {
         msaId: delegatorMsaId,
         targetHash: targetHash,
