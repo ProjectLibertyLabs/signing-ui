@@ -1,29 +1,38 @@
 let registeredEvents = {};
 function setVisibility(id, isVisible) {
-    let classes = document.getElementById(id).getAttribute('class');
+    let classes = document.getElementById(id)?.getAttribute('class') || "";
     if (isVisible) {
         classes = classes.split(' ').filter(c => c !== 'hidden').join(' ');
     }
     else {
         classes = classes + ' hidden';
     }
-    document.getElementById(id).setAttribute("class", classes);
+    document.getElementById(id)?.setAttribute("class", classes);
 }
 function showExtrinsicForm(event) {
     event.preventDefault();
     clearSignedPayloads();
-    const formToShow = event.target.selectedOptions[0].value;
-    const forms = document.getElementsByClassName("extrinsic-form");
-    for (let i = 0; i < forms.length; i++) {
-        let form_id = forms.item(i).id;
-        setVisibility(form_id, form_id === formToShow);
+    if (event.target && event.target.selectedOptions?.length) {
+        const selectEl = event.target;
+        const formToShow = selectEl.selectedOptions[0].value || "";
+        const forms = document.getElementsByClassName("extrinsic-form");
+        for (let i = 0; i < forms.length; i++) {
+            // @ts-ignore
+            let form_id = forms.item(i).id;
+            setVisibility(form_id, form_id === formToShow);
+        }
+    }
+    else {
+        console.error("Could not find selected option");
     }
 }
 function listenForExtrinsicsChange() {
     // If people are playing around and switching providers, don't keep registering the listener.
     if (!registeredEvents["extrinsics"]) {
-        document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
-        document.getElementById('signed_payload').value = '';
+        let extrinsicsEl = document.getElementById("extrinsics");
+        extrinsicsEl.addEventListener("change", showExtrinsicForm);
+        let signedPayloadEl = document.getElementById('signed_payload');
+        signedPayloadEl.value = '';
         registeredEvents["extrinsics"] = true;
     }
     return;

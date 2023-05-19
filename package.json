@@ -1,0 +1,24 @@
+{
+  "name": "signing-ui",
+  "version": "1.0.0",
+  "description": "A UI to demonstrate and help with testing extrinsics that send signed payloads to a Frequency parachain.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc ",
+    "test": "nothing to test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LibertyDSNP/signing-ui.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/LibertyDSNP/signing-ui/issues"
+  },
+  "homepage": "https://github.com/LibertyDSNP/signing-ui#readme",
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}

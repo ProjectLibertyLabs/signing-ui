@@ -1,31 +1,37 @@
 let registeredEvents: Record<string, any> = {};
 
 function setVisibility(id: string, isVisible: boolean) {
-    let classes = document.getElementById(id).getAttribute('class');
+    let classes = document.getElementById(id)?.getAttribute('class') || "";
     if (isVisible) {
         classes = classes.split(' ').filter(c => c !== 'hidden').join(' ')
     } else {
         classes = classes + ' hidden';
     }
-    document.getElementById(id).setAttribute("class", classes);
+    document.getElementById(id)?.setAttribute("class", classes);
 }
 
-function showExtrinsicForm(event) {
+function showExtrinsicForm(event: Event) {
     event.preventDefault();
     clearSignedPayloads();
-    const formToShow = event.target.selectedOptions[0].value;
-    const forms = document.getElementsByClassName("extrinsic-form")
-    for (let i = 0; i < forms.length; i++) {
-        let form_id = forms.item(i).id;
-        setVisibility(form_id, form_id === formToShow)
-    }
+    if (event.target && (event.target as HTMLSelectElement).selectedOptions?.length) {
+        const selectEl = event.target as HTMLSelectElement
+        const formToShow = selectEl.selectedOptions[0].value || "";
+        const forms = document.getElementsByClassName("extrinsic-form")
+        for (let i = 0; i < forms.length; i++) {
+            // @ts-ignore
+            let form_id = forms.item(i).id;
+            setVisibility(form_id, form_id === formToShow)
+        }
+    } else { console.error("Could not find selected option")}
 }
 
 function listenForExtrinsicsChange() {
     // If people are playing around and switching providers, don't keep registering the listener.
     if (!registeredEvents["extrinsics"]) {
-        document.getElementById("extrinsics").addEventListener("change", showExtrinsicForm);
-        (document.getElementById('signed_payload') as HTMLTextAreaElement).value = '';
+        let extrinsicsEl = document.getElementById("extrinsics") as HTMLElement;
+        extrinsicsEl.addEventListener("change", showExtrinsicForm);
+        let signedPayloadEl =(document.getElementById('signed_payload') as HTMLTextAreaElement);
+        signedPayloadEl.value = '';
         registeredEvents["extrinsics"] = true;
     }
     return;
@@ -47,8 +53,8 @@ function clearSignedPayloads() {
 }
 
 function validateForm(formId: string): boolean {
-    let form = document.getElementById(formId);
-    let inputs = form.getElementsByTagName('input');
+    let form = document.getElementById(formId) as HTMLFormElement;
+    let inputs = form.getElementsByTagName('input') as HTMLCollectionOf<HTMLInputElement>;
     let formValid = true;
     for (let i=0; i< inputs.length; i++) {
         let input = inputs[i] as HTMLInputElement;
@@ -64,7 +70,7 @@ function validateForm(formId: string): boolean {
 }
 
 function clearFormInvalid(formId: string) {
-    let form = document.getElementById(formId);
+    let form = document.getElementById(formId) as HTMLFormElement
     let inputs = form.getElementsByTagName('input');
     for (let i=0; i< inputs.length; i++) {
         inputs[i].setAttribute('class', '')

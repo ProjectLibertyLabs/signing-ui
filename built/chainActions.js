@@ -1,15 +1,15 @@
 // @ts-ignore
 import { web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
 // @ts-ignore
-import { u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+import { u16, u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
 async function getBlockNumber(api) {
     let blockData = await api.rpc.chain.getBlock();
-    return (await blockData.block.header.number.toNumber());
+    return blockData.block.header.number.toNumber();
 }
 function parseChainEvent({ events = [], status }) {
-    if (status.isError) {
+    if (status.isInvalid) {
         console.error("isError");
     }
     else if (status.isFinalized || status.isInBlock) {
@@ -20,7 +20,7 @@ function parseChainEvent({ events = [], status }) {
                     alert('Transaction succeeded');
                 }
                 else if (chainEvent.method === 'ExtrinsicFailed') {
-                    alert(`Transaction failed with error: ${chainEvent.data.dispatchError.Module.error}`);
+                    alert(`Transaction failed with error: ${chainEvent.toString()}`);
                 }
             }
         });
@@ -43,38 +43,43 @@ async function signPayloadWithExtension(signingAccount, signingKey, payload) {
     const signRaw = signer?.signRaw;
     let signed;
     if (signer && isFunction(signRaw)) {
-        let payloadWrappedToU8a = u8aWrapBytes(payload.toU8a());
-        signed = await signRaw({
-            address: signer,
-            data: payloadWrappedToU8a,
-            type: 'bytes'
-        });
+        const signerPayloadRaw = {
+            address: signingAccount.address, data: payload, type: 'bytes'
+        };
+        signed = await signRaw(signerPayloadRaw);
+        return signed?.signature;
     }
-    return signed?.signature;
+    return "";
 }
 // returns a properly formatted signature to submit with an extrinsic
 function signPayloadWithKeyring(signingAccount, payload) {
     return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
 }
 async function getPaginatedStorage(api, msaId, schemaId) {
+    // @ts-ignore
     let result = await api.rpc.statefulStorage.getPaginatedStorage(msaId, schemaId);
     console.log({ result });
     return result;
 }
 export async function getCurrentPaginatedHash(api, msaId, schemaId, page_id) {
     const result = await getPaginatedStorage(api, msaId, schemaId);
-    let realPageId = page_id;
+    let realPageId = new u16(api.registry, page_id);
     const page_response = result.filter((page) => page.page_id === realPageId);
     if (page_response.length <= 0) {
         return new u32(api.registry, 0);
     }
-    return page_response[0].content_hash;
+    return new u32(api.registry, page_response[0].content_hash);
 }
 export async function getCurrentItemizedHash(api, msaId, schemaId) {
-    const result = await api.rpc.statefulStorage.getItemizedStorage(msaId, schemaId);
-    return result.content_hash;
-}
-export async function createItemizedSignaturePayload(rawPayload) {
+    try {
+        // @ts-ignore
+        const result = await api.rpc.statefulStorage.getItemizedStorage(msaId, schemaId);
+        return result.content_hash;
+    }
+    catch (e) {
+        alert(`getCurrentItemizedHash failed: ${JSON.stringify(e.message)}`);
+        return 0;
+    }
 }
 function wrapToU8a(payload) {
     return u8aWrapBytes(payload.toU8a());

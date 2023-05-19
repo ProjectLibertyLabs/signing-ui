@@ -1,11 +1,24 @@
 {
   "compilerOptions": {
-    "lib": ["dom","ES2021"],
+    "target": "ES2021",
+    "lib": ["dom", "ESNext"],
     "outDir": "./built",
-    "target": "es2022",
-    "module": "ESNext",
+    "module": "ES2022",
     "allowJs": false,
-    "noImplicitReturns": false,
+    "strict": true,
+    "noImplicitAny": false,
+    "moduleResolution": "Node16",
+    "resolveJsonModule": true,
+    "noEmit": false,
+    "esModuleInterop": true,
+    // turned on by esModuleInterop
+//    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*"],
+  "typeRoots": [
+    "node_modules/@types",
+    "types"
+  ]
 }
