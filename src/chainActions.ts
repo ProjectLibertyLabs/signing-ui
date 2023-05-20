@@ -52,15 +52,14 @@ export async function submitExtrinsicWithKeyring(extrinsic: SubmittableExtrinsic
 // is incorrect - just using signature gives:
 // Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
 export async function signPayloadWithExtension(signingAccount: InjectedAccountWithMeta, signingKey: string, payload: any): Promise<string>{
-    // TODO: allow signing account and MSA Owner Key to be different
     const injector = await web3FromSource(signingAccount.meta.source);
     const signer = injector?.signer;
     const signRaw = signer?.signRaw;
     let signed: SignerResult;
     if (signer && isFunction(signRaw)) {
-        const signerPayloadRaw: SignerPayloadRaw = {
-            address: signingAccount.address, data: payload, type: 'bytes'
-
+        const payloadWrappedToU8a = wrapToU8a(payload);
+        const signerPayloadRaw = {
+            address: signingAccount.address, data: payloadWrappedToU8a, type: 'bytes'
         }
         signed = await signRaw(signerPayloadRaw)
         return signed?.signature;
