@@ -1,14 +1,14 @@
 // @ts-ignore
 import { web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
 // @ts-ignore
-import { u16, u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+import { u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
-async function getBlockNumber(api) {
+export async function getBlockNumber(api) {
     let blockData = await api.rpc.chain.getBlock();
     return blockData.block.header.number.toNumber();
 }
-function parseChainEvent({ events = [], status }) {
+export function parseChainEvent({ events = [], status }) {
     if (status.isInvalid) {
         console.error("isError");
     }
@@ -26,17 +26,17 @@ function parseChainEvent({ events = [], status }) {
         });
     }
 }
-async function submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey) {
+export async function submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey) {
     const injector = await web3FromSource(signingAccount.meta.source);
-    await extrinsic.signAndSend(signingKey, { signer: injector.signer }, parseChainEvent);
+    await extrinsic.signAndSend(signingKey, { signer: injector.signer }, { nonce: -1 }, parseChainEvent);
 }
-async function submitExtrinsicWithKeyring(extrinsic, signingAccount) {
-    await extrinsic.signAndSend(signingAccount, parseChainEvent);
+export async function submitExtrinsicWithKeyring(extrinsic, signingAccount) {
+    await extrinsic.signAndSend(signingAccount, { nonce: -1 }, parseChainEvent);
 }
 // converting to Sr25519Signature is very important, otherwise the signature length
 // is incorrect - just using signature gives:
 // Enum(Sr25519):: Expected input with 64 bytes (512 bits), found 15 bytes
-async function signPayloadWithExtension(signingAccount, signingKey, payload) {
+export async function signPayloadWithExtension(signingAccount, signingKey, payload) {
     // TODO: allow signing account and MSA Owner Key to be different
     const injector = await web3FromSource(signingAccount.meta.source);
     const signer = injector?.signer;
@@ -52,19 +52,12 @@ async function signPayloadWithExtension(signingAccount, signingKey, payload) {
     return "";
 }
 // returns a properly formatted signature to submit with an extrinsic
-function signPayloadWithKeyring(signingAccount, payload) {
+export function signPayloadWithKeyring(signingAccount, payload) {
     return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
 }
-async function getPaginatedStorage(api, msaId, schemaId) {
-    // @ts-ignore
-    let result = await api.rpc.statefulStorage.getPaginatedStorage(msaId, schemaId);
-    console.log({ result });
-    return result;
-}
 export async function getCurrentPaginatedHash(api, msaId, schemaId, page_id) {
-    const result = await getPaginatedStorage(api, msaId, schemaId);
-    let realPageId = new u16(api.registry, page_id);
-    const page_response = result.filter((page) => page.page_id === realPageId);
+    const result = await api.rpc.statefulStorage.getPaginatedStorage(msaId, schemaId);
+    const page_response = result.filter((page) => page.page_id.toNumber() === page_id);
     if (page_response.length <= 0) {
         return new u32(api.registry, 0);
     }
@@ -81,7 +74,6 @@ export async function getCurrentItemizedHash(api, msaId, schemaId) {
         return 0;
     }
 }
-function wrapToU8a(payload) {
+export function wrapToU8a(payload) {
     return u8aWrapBytes(payload.toU8a());
 }
-export { getBlockNumber, signPayloadWithExtension, signPayloadWithKeyring, submitExtrinsicWithKeyring, submitExtrinsicWithExtension, wrapToU8a, };

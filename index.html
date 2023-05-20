@@ -17,7 +17,7 @@
         .container div {
             flex-grow: 1;
         }
-        .payload form textarea {
+        #payload #payload_signatures textarea {
             height: 100px;
         }
         .invalid {
@@ -44,7 +44,7 @@
     <button type="button" id="connectButton">Connect to Node</button>
 </form>
 <form id="create_msa_form" class="hidden">
-    <p>Click to create an MSA for the selected account if you need to before submitting one of the other extrinsics.</p>
+    <p>If needed, click to create an MSA for the selected account above.</p>
     <button type="button" id="create_msa_button">Create MSA</button>
 </form>
 
@@ -65,8 +65,8 @@
     <div id='extrinsics_forms' class="hidden">
         <!-- HANDLES claim_handle -->
         <form id="handles_claim_handle" class="hidden extrinsic-form">
-            <p><em>Claim Handle</em></p>
-            <p>Prerequisite: Create MSA</p>
+            <h3>Claim Handle</h3>
+            <p><strong>Prerequisites:</strong>: Create MSA</p>
             <label for="claim_handle_msaOwnerKey">MSA Owner Key (AccountId32)</label>
             <select id="claim_handle_msaOwnerKey" required></select>
 
@@ -82,8 +82,8 @@
 
         <!-- MSA create_sponsored_account_with_delegation -->
         <form id="msa_create_sponsored_account_with_delegation" class="hidden extrinsic-form">
-            <p><em>Create Sponsored Account With Delegation</em></p>
-            <p>Prerequisite: Provider and Schema(s) must be created</p>
+            <h3>Create Sponsored Account With Delegation</h3>
+            <p><strong>Prerequisites:</strong>: Provider and Schema(s) must be created</p>
 
             <label for="create_sponsored_account_with_delegation_delegator_key">Delegator Key (AccountId32)</label>
             <select id="create_sponsored_account_with_delegation_delegator_key" required></select>
@@ -104,8 +104,8 @@
 
         <!-- MSA  grant_delegation -->
         <form id="msa_grant_delegation" class="hidden extrinsic-form">
-            <p><em>msa.grant_delegation</em></p>
-            <p>Prerequisite: Create MSA, New Provider</p>
+            <h3>msa.grant_delegation</h3>
+            <p><strong>Prerequisites:</strong>: Create MSA, New Provider</p>
 
             <label for="grant_delegation_delegator_key">Delegator Key (AccountId32)</label>
             <select id="grant_delegation_delegator_key" required></select>
@@ -116,7 +116,7 @@
             <label for="grant_delegation_schema_ids">Schema Ids</label>
             <input id="grant_delegation_schema_ids" placeholder="e.g. 1,2,3" required>
 
-            <label for="grant_delegation_expiration">Expiration Blocks</label>
+            <label for="grant_delegation_expiration">Expiration Block</label>
             <input id="grant_delegation_expiration" placeholder="0" required>
 
             <button type="button" id="msa_grant_delegation_sign_button">Sign payload</button>
@@ -125,8 +125,8 @@
 
         <!-- MSA  add_public_key_to_msa -->
         <form id="msa_add_public_key_to_msa" class="hidden extrinsic-form">
-            <p><em>msa.add_public_key_to_msa</em></p>
-            <p>Prerequisite: Create MSA</p>
+            <h3>msa.add_public_key_to_msa</h3>
+            <p><strong>Prerequisites:</strong>: Create MSA</p>
 
             <label for="add_public_key_to_msa_new_key">New MSA Owner Key (AccountId32></label>
             <select id="add_public_key_to_msa_new_key" required></select>
@@ -134,7 +134,7 @@
             <label for="add_public_key_to_msa_msa_id">MSA Id (number)</label>
             <input id="add_public_key_to_msa_msa_id" required>
 
-            <label for="add_public_key_to_msa_expiration">Expiration (number)</label>
+            <label for="add_public_key_to_msa_expiration">Expiration Block</label>
             <input id="add_public_key_to_msa_expiration" placeholder="# of blocks from now" required>
 
             <button type="button" id="add_public_key_to_msa_sign_button">Sign payload</button>
@@ -143,10 +143,14 @@
 
         <!-- STATEFUL STORAGE apply_item_actions_with_signature -->
         <form id="stateful_storage_apply_item_actions_with_signature" class="hidden extrinsic-form">
-            <p><em>stateful_storage.apply_item_actions_with_signature</em></p>
-            <p>Prerequisites: Create Provider, Delegator MSAs, Itemized "Chat Message" Schema</p>
+            <h3>stateful_storage.apply_item_actions_with_signature</h3>
+            <p><strong>Prerequisites:</strong>: Provider, Delegator MSAs,
+                an Itemized
+                    <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
+                        "chat message" schema</a>
+            </p>
 
-            <label for="apply_item_actions_with_signature_delegator_key">Delegator Key (AccountId32)</label>
+            <label for="apply_item_actions_with_signature_delegator_key">Delegator Key</label>
             <select id="apply_item_actions_with_signature_delegator_key" required></select>
 
             <label for="apply_item_actions_with_signature_delegator_msa">Delegator MSA Id</label>
@@ -170,11 +174,34 @@
 
         <!-- STATEFUL STORAGE upsert_page_with_signature -->
         <form id="stateful_storage_upsert_page_with_signature" class="hidden extrinsic-form">
-            <p><em>stateful_storage.upsert_page_with_signature</em></p>
-            <p>Prerequisite: Create paginated schema</p>
+            <h3>stateful_storage.upsert_page_with_signature</h3>
+            <p><strong>Prerequisites:</strong>:
+                <ol>
+                    <li>Provider MSA</li>
+                    <li>Delegator MSA</li>
+                    <li>a Paginated
+                        <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
+                            "chat message" schema</a>
+                    </li>
+                </ol>
+            </p>
+            <label for="upsert_page_with_signature_delegator_key">Delegator Key</label>
+            <select id="upsert_page_with_signature_delegator_key" required></select>
 
-            <label for="upsert_page_with_signature_page">Page data (text)</label>
-            <input id="upsert_page_with_signature_page" required>
+            <label for="upsert_page_with_signature_msa_id">Delegator MSA Id</label>
+            <input id="upsert_page_with_signature_msa_id" required>
+
+            <label for="upsert_page_with_signature_schema_id">Schema Id</label>
+            <input id="upsert_page_with_signature_schema_id" required>
+
+            <label for="upsert_page_with_signature_page_id">Page Id</label>
+            <input id="upsert_page_with_signature_page_id" required>
+
+            <label for="upsert_page_with_signature_page_data">Page data (text)</label>
+            <input id="upsert_page_with_signature_page_data" required>
+
+            <label for="upsert_page_with_signature_expiration">Expiration block</label>
+            <input id="upsert_page_with_signature_expiration" required>
 
             <button type="button" id="upsert_page_with_signature_sign_button">Sign payload</button>
             <button type="button" id="upsert_page_with_signature_submit_button">Submit extrinsic</button>
@@ -182,23 +209,46 @@
 
         <!-- STATEFUL STORAGE  delete_page_with_signature -->
         <form id="stateful_storage_delete_page_with_signature" class="hidden extrinsic-form">
-            <p><em>stateful_storage.delete_page_with_signature</em></p>
-            <p>Prerequisite: ______</p>
+            <h3>stateful_storage.delete_page_with_signature</h3>
+            <p><strong>Prerequisites:</strong>:
+                <ol>
+                    <li>Provider MSA</li>
+                    <li>Delegator MSA</li>
+                    <li>a Paginated
+                        <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
+                        "chat message" schema</a>
+                    </li>
+                    <li>an added/upserted page of data</li>
+                </ol>
+            </p>
 
-            <label for="delete_page_with_signature_page">Page</label>
-            <input id="delete_page_with_signature_page" placeholder="page data" required>
+            <label for="delete_page_with_signature_delegator_key">Delegator Key</label>
+            <select id="delete_page_with_signature_delegator_key" required></select>
+
+            <label for="delete_page_with_signature_msa_id">Delegator MSA Id</label>
+            <input id="delete_page_with_signature_msa_id" required>
+
+            <label for="delete_page_with_signature_schema_id">Schema Id</label>
+            <input id="delete_page_with_signature_schema_id" required>
+
+            <label for="delete_page_with_signature_page_id">Page Id</label>
+            <input id="delete_page_with_signature_page_id" required>
+
+            <label for="delete_page_with_signature_expiration">Expiration block</label>
+            <input id="delete_page_with_signature_expiration" required>
 
             <button type="button" id="delete_page_with_signature_sign_button">Sign payload</button>
             <button type="button" id="delete_page_with_signature_submit_button">Submit extrinsic</button>
         </form>
     </div>
+
     <div id='payload' class="hidden">
-        <form id="payload_signature" class="clear_on_reset disable_on_reset right">
+        <form id="payload_signatures" class="clear_on_reset disable_on_reset">
             <label for="signed_payload">Signed Payload</label>
             <textarea id="signed_payload" disabled></textarea>
-        </form>
-        <form id="payload_signature2" class="clear_on_reset disable_on_reset right">
-            <p><em>For extrinsics that require two signatures</em></p>
+<!--        </form>-->
+<!--        <form id="payload_signature2" class="clear_on_reset disable_on_reset">-->
+            <h3>For extrinsics that require two signatures</h3>
             <label for="signed_payload2">Second Signed Payload</label>
             <textarea id="signed_payload2" disabled></textarea>
         </form>

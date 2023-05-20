@@ -19,7 +19,11 @@ import {
     getGrantDelegationFormData,
     listenForExtrinsicsChange,
     setVisibility,
-    validateForm, getApplyItemActionsWithSignatureFormData, getAddPublicKeyFormData, getClaimHandleFormData,
+    validateForm,
+    getApplyItemActionsWithSignatureFormData,
+    getAddPublicKeyFormData,
+    getClaimHandleFormData,
+    getUpsertPageFormData, getDeletePageWithSignatureFormData,
 } from "./domActions.js";
 
 import {
@@ -152,7 +156,6 @@ function populateDropdownWithAccounts(elementId: string) {
 }
 
 async function loadAccounts() {
-    // clear options
     (document.getElementById("signing-address") as HTMLElement).innerHTML = "";
 
     // populating for localhost and for a parachain are different since with localhost, there is
@@ -160,14 +163,12 @@ async function loadAccounts() {
     if (providerName === "localhost") {
         const keyring = new Keyring({ type: 'sr25519' });
 
-        // Add Alice to our keyring with a hard-derivation path (empty phrase, so uses dev)
         ['//Alice', '//Bob', '//Charlie', '//Dave', '//Eve', '//Ferdie'].forEach(accountName => {
             let account = keyring.addFromUri(accountName);
             account.meta.name = accountName;
             validAccounts[account.address] = account;
         })
     } else {
-        // meta.source contains the name of the extension that provides this account
         const extensions = await web3Enable('Frequency parachain signer helper');
         if (!extensions.length) {
             alert("Polkadot{.js} extension not found; please install it first.");
@@ -191,7 +192,9 @@ async function loadAccounts() {
         'add_public_key_to_msa_new_key',
         'create_sponsored_account_with_delegation_delegator_key',
         'grant_delegation_delegator_key',
-        'apply_item_actions_with_signature_delegator_key'
+        'apply_item_actions_with_signature_delegator_key',
+        'upsert_page_with_signature_delegator_key',
+        'delete_page_with_signature_delegator_key',
     ].forEach(selectId => populateDropdownWithAccounts(selectId))
 }
 
@@ -413,9 +416,9 @@ async function submitApplyItemActionsWithSignature(event: Event) {
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
 
-    const {delegatorKey, payload} = await getApplyItemActionsWithSignatureFormData(singletonApi);
+    const {delegatorKey, payload, signatures} = await getApplyItemActionsWithSignatureFormData(singletonApi);
 
-    const proof = { Sr25519: getHTMLInputValue('signed_payload') };
+    const proof = { Sr25519: signatures[0] };
 
     const extrinsic = singletonApi.tx.statefulStorage.applyItemActionsWithSignature(delegatorKey, proof, payload.toU8a())
 
@@ -433,29 +436,31 @@ async function signUpsertPageWithSignature(event: Event) {
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
 
-    const delegatorKey = getHTMLInputValue('apply_item_actions_with_signature_delegator_key');
-    const delegatorMsaId = parseInt(getHTMLInputValue('apply_item_actions_with_signature_delegator_msa'));
-    const itemizedSchemaId = parseInt(getHTMLInputValue('apply_item_actions_with_signature_schema_id'));
-    const payload1 = getHTMLInputValue('apply_item_actions_with_signature_actions1');
-    const payload2 = getHTMLInputValue('apply_item_actions_with_signature_actions2')
-    const expiration = parseInt(getHTMLInputValue('apply_item_actions_with_signature_expiration'));
+    const {delegatorKey, payload} = await getUpsertPageFormData(singletonApi);
+    const delegatorAccount = validAccounts[delegatorKey];
 
-    const targetHash = await getCurrentItemizedHash(singletonApi, delegatorMsaId, itemizedSchemaId);
-    const addActions = [{ "Add": payload1}, {"Add": payload2}];
-    const rawPayload: ItemizedSignaturePayload = {
-        msaId: delegatorMsaId,
-        targetHash: targetHash,
-        schemaId: itemizedSchemaId,
-        actions: addActions,
-        expiration,
-    };
-    const payload = singletonApi.registry.createType("PalletStatefulStorageItemizedSignaturePayload", rawPayload);
+    const signature = providerName == 'localhost' ?
+        signPayloadWithKeyring(delegatorAccount, payload) :
+        await signPayloadWithExtension(delegatorAccount, delegatorKey, payload)
+
+    let signatureEl = document.getElementById('signed_payload') as HTMLTextAreaElement;
+    signatureEl.value = signature;
 }
 async function submitUpsertPageWithSignature(event: Event) {
     event.preventDefault();
     const formId = 'stateful_storage_upsert_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    const { signingKey, delegatorKey, payload, signatures} = await getUpsertPageFormData(singletonApi);
+    const proof = { Sr25519: signatures[0] };
+
+    const extrinsic = singletonApi.tx.statefulStorage.upsertPageWithSignature(delegatorKey, proof, payload.toU8a());
+    const signingAccount = validAccounts[signingKey];
+
+    providerName === 'localhost' ?
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
 }
 
 async function signDeletePageWithSignature(event: Event){
@@ -464,13 +469,31 @@ async function signDeletePageWithSignature(event: Event){
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
 
+    const { delegatorKey, payload } =
+        await getDeletePageWithSignatureFormData(singletonApi);
+    const delegatorAccount = validAccounts[delegatorKey];
+
+    const signature = providerName == 'localhost' ?
+        signPayloadWithKeyring(delegatorAccount, payload) :
+        await signPayloadWithExtension(delegatorAccount, delegatorKey, payload)
+
+    let signatureEl = document.getElementById('signed_payload') as HTMLTextAreaElement;
+    signatureEl.value = signature;
 }
 async function submitDeletePageWithSignature(event: Event){
     event.preventDefault();
-
     const formId = 'stateful_storage_delete_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    const { signingKey, delegatorKey, payload, signatures} = await getDeletePageWithSignatureFormData(singletonApi);
+    const proof = { Sr25519: signatures[0] };
+    const extrinsic = singletonApi.tx.statefulStorage.deletePageWithSignature(delegatorKey, proof, payload.toU8a())
+    const signingAccount = validAccounts[signingKey];
+
+    providerName === 'localhost' ?
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
 }
 
 

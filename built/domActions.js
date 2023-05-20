@@ -1,4 +1,4 @@
-import { getCurrentItemizedHash } from "./chainActions.js";
+import { getCurrentItemizedHash, getCurrentPaginatedHash } from "./chainActions.js";
 // @ts-ignore
 import { Bytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 let registeredEvents = {};
@@ -146,4 +146,44 @@ export async function getApplyItemActionsWithSignatureFormData(api) {
     const payload = api.registry.createType("PalletStatefulStorageItemizedSignaturePayload", rawPayload);
     const signatures = [getHTMLInputValue('signed_payload')];
     return { signingKey, delegatorKey, signatures, payload };
+}
+export async function getUpsertPageFormData(api) {
+    const signingKey = getSelectedOption('signing-address').value;
+    const signatures = [getHTMLInputValue('signed_payload')];
+    const delegatorKey = getHTMLInputValue('upsert_page_with_signature_delegator_key');
+    const msaId = parseInt(getHTMLInputValue('upsert_page_with_signature_msa_id'));
+    const pageId = parseInt(getHTMLInputValue('upsert_page_with_signature_page_id'));
+    const schemaId = parseInt(getHTMLInputValue('upsert_page_with_signature_schema_id'));
+    const expiration = parseInt(getHTMLInputValue('upsert_page_with_signature_expiration'));
+    const pageData = new Bytes(api.registry, getHTMLInputValue('upsert_page_with_signature_page_data'));
+    let targetHash = await getCurrentPaginatedHash(api, msaId, schemaId, pageId);
+    const upsertPayload = {
+        msaId,
+        targetHash,
+        schemaId,
+        pageId,
+        expiration,
+        payload: pageData,
+    };
+    const payload = api.registry.createType("PalletStatefulStoragePaginatedUpsertSignaturePayload", upsertPayload);
+    return { signingKey, delegatorKey, payload, signatures, };
+}
+export async function getDeletePageWithSignatureFormData(api) {
+    const signingKey = getSelectedOption('signing-address').value;
+    const signatures = [getHTMLInputValue('signed_payload')];
+    const delegatorKey = getHTMLInputValue('delete_page_with_signature_delegator_key');
+    const msaId = parseInt(getHTMLInputValue('delete_page_with_signature_msa_id'));
+    const pageId = parseInt(getHTMLInputValue('delete_page_with_signature_page_id'));
+    const schemaId = parseInt(getHTMLInputValue('delete_page_with_signature_schema_id'));
+    const expiration = parseInt(getHTMLInputValue('delete_page_with_signature_expiration'));
+    let targetHash = await getCurrentPaginatedHash(api, msaId, schemaId, pageId);
+    const upsertPayload = {
+        msaId,
+        targetHash,
+        schemaId,
+        pageId,
+        expiration,
+    };
+    const payload = api.registry.createType("PalletStatefulStoragePaginatedUpsertSignaturePayload", upsertPayload);
+    return { signingKey, delegatorKey, payload, signatures };
 }
