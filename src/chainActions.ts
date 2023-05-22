@@ -16,6 +16,7 @@ import { PageId, PaginatedStorageResponse } from "@frequency-chain/api-augment/i
 // @ts-ignore
 import {InjectedAccountWithMeta} from "https://cdn.jsdelivr.net/npm/@polkadot/extension-inject@0.46.3/+esm";
 
+import { waitFor } from "./util.js";
 
 export async function getBlockNumber(api: ApiPromise): Promise<number> {
     let blockData = await api.rpc.chain.getBlock();
@@ -24,7 +25,7 @@ export async function getBlockNumber(api: ApiPromise): Promise<number> {
 
 export function parseChainEvent({ events = [], status }: { events?: EventRecord[], status: ExtrinsicStatus; }) {
     if (status.isInvalid) {
-        console.error("isError")
+        alert("Extrinsic is invalid.")
     }  else if ( status.isFinalized || status.isInBlock ) {
         events.forEach((eventRecord: EventRecord) => {
             if (eventRecord.event.section === 'system') {
@@ -36,16 +37,55 @@ export function parseChainEvent({ events = [], status }: { events?: EventRecord[
                 }
             }
         })
+    } else {
+        console.error("unknown status: ", status.toString());
     }
 }
 
 export async function submitExtrinsicWithExtension(extrinsic: any, signingAccount: any, signingKey: string): Promise<void> {
     const injector = await web3FromSource(signingAccount.meta.source);
-    await extrinsic.signAndSend(signingKey, {signer: injector.signer}, {nonce: -1}, parseChainEvent );
+    let currentTxDone = false;
+    try {
+        function sendStatusCb({events = [], status}: { events?: EventRecord[], status: ExtrinsicStatus; }) {
+            if (status.isInvalid) {
+                alert('Transaction invalid');
+                currentTxDone = true;
+            } else if (status.isReady) {
+                console.info('Transaction is ready');
+            } else if (status.isBroadcast) {
+                console.info('Transaction has been broadcasted');
+            } else if (status.isInBlock) {
+                console.info('Transaction is in block');
+            } else if (status.isFinalized) {
+                console.log(`Transaction has been included in blockHash ${status.asFinalized.toHex()}`);
+                events.forEach(
+                    ({event}) => {
+                        if (event.method === 'ExtrinsicSuccess') {
+                            alert('Transaction succeeded');
+                        } else if (event.method === 'ExtrinsicFailed') {
+                            alert('Transaction failed');
+                        }
+                    }
+                );
+                currentTxDone = true;
+            }
+        }
+
+        await extrinsic.signAndSend(signingKey, {signer: injector.signer}, {nonce: -1}, sendStatusCb);
+        await waitFor(() => currentTxDone);
+    } catch {
+        alert("Awaiting transaction results timed out.  Check the chain for events or a failed transaction.");
+    }
 }
 
+
+
 export async function submitExtrinsicWithKeyring(extrinsic: SubmittableExtrinsic, signingAccount: KeyringPair): Promise<void> {
-    await extrinsic.signAndSend(signingAccount, {nonce: -1}, parseChainEvent );
+    try {
+        await extrinsic.signAndSend(signingAccount, {nonce: -1}, parseChainEvent );
+    } catch(e: any) {
+        alert(`There was a problem:  ${e.toString()}`);
+    }
 }
 
 // converting to Sr25519Signature is very important, otherwise the signature length
@@ -61,15 +101,25 @@ export async function signPayloadWithExtension(signingAccount: InjectedAccountWi
         const signerPayloadRaw = {
             address: signingAccount.address, data: payloadWrappedToU8a, type: 'bytes'
         }
-        signed = await signRaw(signerPayloadRaw)
-        return signed?.signature;
+        try {
+            signed = await signRaw(signerPayloadRaw)
+            return signed?.signature;
+        } catch(e: any) {
+            alert(`Signing failed: ${e.message}`);
+            return "ERROR " + e.message;
+        }
     }
-    return ""
+    return "Unknown error"
 }
 
 // returns a properly formatted signature to submit with an extrinsic
 export function signPayloadWithKeyring(signingAccount: KeyringPair, payload: any): string {
-    return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
+    try {
+        return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
+    } catch (e: any) {
+        alert(`Signing failed: ${e.message}`);
+        return "ERROR " + e.message
+    }
 }
 
 export async function getCurrentPaginatedHash(api: ApiPromise, msaId: number, schemaId: number, page_id: number): Promise<u32> {

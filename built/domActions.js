@@ -2,6 +2,24 @@ import { getCurrentItemizedHash, getCurrentPaginatedHash } from "./chainActions.
 // @ts-ignore
 import { Bytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 let registeredEvents = {};
+// Simple loading and button blocker
+export function setProgress(id, isInProgress) {
+    const spinner = document.getElementById("txProcessing");
+    const submitButton = document.getElementById(id);
+    const spinnerContainer = document.getElementById('txProcessingContainer');
+    if (isInProgress) {
+        submitButton.disabled = true;
+        // spinner.style.display = "block";
+        spinnerContainer.style.display = "block";
+        spinnerContainer.setAttribute("class", "isProcessing");
+    }
+    else {
+        submitButton.disabled = false;
+        // spinner.style.display = "none";
+        spinnerContainer.style.display = "none";
+        spinnerContainer.setAttribute("class", "");
+    }
+}
 export function setVisibility(id, isVisible) {
     let classes = document.getElementById(id)?.getAttribute('class') || "";
     if (isVisible) {

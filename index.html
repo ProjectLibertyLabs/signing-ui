@@ -25,16 +25,40 @@
             border-width: 2px;
         }
 
+        /* Spinner */
+        .loader {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--color-accent);
+            box-shadow: 32px 0 var(--color-accent), -32px 0 var(--color-accent);
+            position: relative;
+            animation: flash 1s ease-out infinite alternate;
+            margin-left: 90px;
+        }
+        #txProcessingContainer h3 { padding: 60px; margin: 0 auto;}
+        .loaderContainer { display: none; }
+        .isProcessing {
+            position: absolute;
+            top: 22px;
+            height: 400px;
+            width: 800px;
+            margin: 22px;
+            background: #DEE8F6;
+            border: #cccccc;
+        }
     </style>
 </head>
 <body style="margin: 22px;">
-<p>Token: <span id="unit">...</span></p>
-<p>Current block number: <span id="current-block"></span></p>
+<div id="txProcessingContainer" class="loaderContainer">
+    <h3>Please wait</h3>
+    <span id="txProcessing" class="loader"></span>
+    <br>
+</div>
 <form id="setupForm">
     <label for="provider-list">Choose an Endpoint</label>
     <select id="provider-list" required>
         <option value="wss://rpc.rococo.frequency.xyz" name="rococo">Rococo</option>
-<!--        <option value="wss://1.rpc.frequency.xyz" name="frequency">Mainnet</option>-->
         <option value="ws://localhost:9944" name="localhost">Localhost</option>
     </select>
 
@@ -42,20 +66,27 @@
     <select id="signing-address" required></select>
 
     <button type="button" id="connectButton">Connect to Node</button>
+
+    <p>Token: <span id="unit">...</span></p>
+    <p>Current block number: <span id="current-block"></span></p>
+    <p>For itemized schema on Rococo, use Schema ID = 56</p>
+    <p>For paginated schema on Rococo, use Schema ID = 57</p>
 </form>
 <form id="create_msa_form" class="hidden">
     <p>If needed, click to create an MSA for the selected account above.</p>
     <button type="button" id="create_msa_button">Create MSA</button>
 </form>
-
 <form id="setupExtrinsic" class="hidden">
     <label for="extrinsics">Select Extrinsic</label>
     <select id="extrinsics">
         <option value="handles_claim_handle">handles.claim_handle</option>
-        <option value="msa_create_sponsored_account_with_delegation">msa.create_sponsored_account_with_delegation</option>
+        <option value="msa_create_sponsored_account_with_delegation">msa.create_sponsored_account_with_delegation
+        </option>
         <option value="msa_grant_delegation">msa.grant_delegation</option>
         <option value="msa_add_public_key_to_msa">msa.add_public_key_to_msa</option>
-        <option value="stateful_storage_apply_item_actions_with_signature">stateful_storage.apply_item_actions_with_signature</option>
+        <option value="stateful_storage_apply_item_actions_with_signature">
+            stateful_storage.apply_item_actions_with_signature
+        </option>
         <option value="stateful_storage_upsert_page_with_signature">stateful_storage.upsert_page_with_signature</option>
         <option value="stateful_storage_delete_page_with_signature">stateful_storage.delete_page_with_signature</option>
     </select>
@@ -98,7 +129,8 @@
             <input id="create_sponsored_account_with_delegation_expiration" placeholder="0" required>
 
             <button type="button" id="msa_create_sponsored_account_with_delegation_sign_button">Sign payload</button>
-            <button type="button" id="msa_create_sponsored_account_with_delegation_submit_button">Submit extrinsic</button>
+            <button type="button" id="msa_create_sponsored_account_with_delegation_submit_button">Submit extrinsic
+            </button>
 
         </form>
 
@@ -146,8 +178,8 @@
             <h3>stateful_storage.apply_item_actions_with_signature</h3>
             <p><strong>Prerequisites:</strong>: Provider, Delegator MSAs,
                 an Itemized
-                    <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
-                        "chat message" schema</a>
+                <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
+                    "chat message" schema</a>
             </p>
 
             <label for="apply_item_actions_with_signature_delegator_key">Delegator Key</label>
@@ -176,14 +208,14 @@
         <form id="stateful_storage_upsert_page_with_signature" class="hidden extrinsic-form">
             <h3>stateful_storage.upsert_page_with_signature</h3>
             <p><strong>Prerequisites:</strong>:
-                <ol>
-                    <li>Provider MSA</li>
-                    <li>Delegator MSA</li>
-                    <li>a Paginated
-                        <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
-                            "chat message" schema</a>
-                    </li>
-                </ol>
+            <ol>
+                <li>Provider MSA</li>
+                <li>Delegator MSA</li>
+                <li>a Paginated
+                    <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
+                        "chat message" schema</a>
+                </li>
+            </ol>
             </p>
             <label for="upsert_page_with_signature_delegator_key">Delegator Key</label>
             <select id="upsert_page_with_signature_delegator_key" required></select>
@@ -211,15 +243,15 @@
         <form id="stateful_storage_delete_page_with_signature" class="hidden extrinsic-form">
             <h3>stateful_storage.delete_page_with_signature</h3>
             <p><strong>Prerequisites:</strong>:
-                <ol>
-                    <li>Provider MSA</li>
-                    <li>Delegator MSA</li>
-                    <li>a Paginated
-                        <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
+            <ol>
+                <li>Provider MSA</li>
+                <li>Delegator MSA</li>
+                <li>a Paginated
+                    <a href="https://github.com/LibertyDSNP/frequency/blob/b75eb9f4c4fa43066c052dbd12e4a5c254e497bb/integration-tests/stateful-pallet-storage/fixtures/itemizedSchemaType.ts">
                         "chat message" schema</a>
-                    </li>
-                    <li>an added/upserted page of data</li>
-                </ol>
+                </li>
+                <li>an added/upserted page of data</li>
+            </ol>
             </p>
 
             <label for="delete_page_with_signature_delegator_key">Delegator Key</label>
@@ -246,8 +278,6 @@
         <form id="payload_signatures" class="clear_on_reset disable_on_reset">
             <label for="signed_payload">Signed Payload</label>
             <textarea id="signed_payload" disabled></textarea>
-<!--        </form>-->
-<!--        <form id="payload_signature2" class="clear_on_reset disable_on_reset">-->
             <h3>For extrinsics that require two signatures</h3>
             <label for="signed_payload2">Second Signed Payload</label>
             <textarea id="signed_payload2" disabled></textarea>

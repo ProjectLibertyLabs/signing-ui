@@ -24,6 +24,7 @@ import {
     getAddPublicKeyFormData,
     getClaimHandleFormData,
     getUpsertPageFormData, getDeletePageWithSignatureFormData,
+    setProgress,
 } from "./domActions.js";
 
 import {
@@ -115,6 +116,7 @@ function registerExtrinsicsButtonHandlers() {
 // Connect to the wallet and blockchain
 async function connect(event: Event) {
     event.preventDefault();
+    setProgress("connectButton", true);
     let selectedProvider = getSelectedOption('provider-list');
     providerName = selectedProvider.getAttribute("name") || "";
     const api = await getApi(selectedProvider.value);
@@ -129,6 +131,7 @@ async function connect(event: Event) {
 
         await loadAccounts();
         (document.getElementById("setupExtrinsic") as HTMLElement).setAttribute("class", "ready");
+        setProgress("connectButton", true);
         setVisibility('create_msa_form', true);
         setVisibility('extrinsics_forms', true);
         setVisibility('payload', true)
@@ -138,11 +141,13 @@ async function connect(event: Event) {
     } else {
         alert(`could not connect to ${providerName}`)
     }
+    setProgress("connectButton", false);
     return;
 }
 
 function populateDropdownWithAccounts(elementId: string) {
     let accountsSelect = document.getElementById(elementId) as HTMLSelectElement;
+    accountsSelect.innerHTML = "";
     Object.keys(validAccounts).forEach( key => {
         const el = document.createElement("option") as HTMLOptionElement;
         const a =  validAccounts[key];
@@ -160,6 +165,7 @@ async function loadAccounts() {
 
     // populating for localhost and for a parachain are different since with localhost, there is
     // access to the Alice/Bob/Charlie accounts etc., and so won't use the extension.
+    validAccounts = {};
     if (providerName === "localhost") {
         const keyring = new Keyring({ type: 'sr25519' });
 
@@ -174,7 +180,6 @@ async function loadAccounts() {
             alert("Polkadot{.js} extension not found; please install it first.");
             return;
         }
-        validAccounts = {};
         let allAccounts = await web3Accounts();
         allAccounts.forEach(a => {
             // display only the accounts allowed for this chain
@@ -224,6 +229,8 @@ function resetForms() {
 // createMSA
 async function createMsa(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
     const signingKey = getSelectedOption('signing-address').value;
     const signingAccount = validAccounts[signingKey];
     const extrinsic = singletonApi.tx.msa.create();
@@ -231,6 +238,7 @@ async function createMsa(event: Event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair) :
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+    setProgress(submitButtonId, false)
 }
 
 async function signClaimHandle(event: Event) {
@@ -255,6 +263,7 @@ async function signClaimHandle(event: Event) {
 
 async function submitClaimHandle(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'handles_claim_handle';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -267,6 +276,7 @@ async function submitClaimHandle(event: Event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+    setProgress(submitButtonId, false)
 }
 
 
@@ -299,6 +309,7 @@ async function signAddPublicKeyToMsa(event: Event) {
 
 async function submitAddPublicKeyToMsa(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'msa_add_public_key_to_msa';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -314,6 +325,7 @@ async function submitAddPublicKeyToMsa(event: Event) {
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
 
+    setProgress(submitButtonId, false)
 }
 
 async function signCreateSponsoredAccountWithDelegation(event: Event) {
@@ -344,6 +356,7 @@ async function signCreateSponsoredAccountWithDelegation(event: Event) {
 
 async function submitCreateSponsoredAccountWithDelegation(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'msa_create_sponsored_account_with_delegation';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -357,6 +370,7 @@ async function submitCreateSponsoredAccountWithDelegation(event: Event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+    setProgress(submitButtonId, false)
 }
 
 async function signGrantDelegation(event: Event) {
@@ -378,6 +392,7 @@ async function signGrantDelegation(event: Event) {
 
 async function submitGrantDelegation(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'msa_grant_delegation';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -391,7 +406,7 @@ async function submitGrantDelegation(event: Event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
-
+    setProgress(submitButtonId, false)
 }
 
 async function signApplyItemActionsWithSignature(event: Event) {
@@ -412,6 +427,7 @@ async function signApplyItemActionsWithSignature(event: Event) {
 
 async function submitApplyItemActionsWithSignature(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'stateful_storage_apply_item_actions_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -428,6 +444,7 @@ async function submitApplyItemActionsWithSignature(event: Event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+    setProgress(submitButtonId, false)
 }
 
 async function signUpsertPageWithSignature(event: Event) {
@@ -448,6 +465,7 @@ async function signUpsertPageWithSignature(event: Event) {
 }
 async function submitUpsertPageWithSignature(event: Event) {
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'stateful_storage_upsert_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -461,6 +479,7 @@ async function submitUpsertPageWithSignature(event: Event) {
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+    setProgress(submitButtonId, false)
 }
 
 async function signDeletePageWithSignature(event: Event){
@@ -482,6 +501,7 @@ async function signDeletePageWithSignature(event: Event){
 }
 async function submitDeletePageWithSignature(event: Event){
     event.preventDefault();
+    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'stateful_storage_delete_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
@@ -494,6 +514,7 @@ async function submitDeletePageWithSignature(event: Event){
     providerName === 'localhost' ?
         await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
         await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+    setProgress(submitButtonId, false)
 }
 
 

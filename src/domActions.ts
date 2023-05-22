@@ -15,6 +15,23 @@ export type ExtrinsicFormData = {
     payload: any
 }
 
+// Simple loading and button blocker
+export function setProgress(id: string, isInProgress: boolean) {
+    const spinner = document.getElementById("txProcessing") as HTMLElement;
+    const submitButton = document.getElementById(id) as HTMLButtonElement;
+    const spinnerContainer = document.getElementById('txProcessingContainer') as HTMLElement;
+    if (isInProgress) {
+        submitButton.disabled = true;
+        // spinner.style.display = "block";
+        spinnerContainer.style.display = "block";
+        spinnerContainer.setAttribute("class", "isProcessing");
+    } else {
+        submitButton.disabled = false;
+        // spinner.style.display = "none";
+        spinnerContainer.style.display = "none"
+        spinnerContainer.setAttribute("class", "");
+    }
+}
 export function setVisibility(id: string, isVisible: boolean) {
     let classes = document.getElementById(id)?.getAttribute('class') || "";
     if (isVisible) {

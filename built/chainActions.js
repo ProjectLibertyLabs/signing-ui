@@ -4,13 +4,14 @@ import { web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension
 import { u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
+import { waitFor } from "./util.js";
 export async function getBlockNumber(api) {
     let blockData = await api.rpc.chain.getBlock();
     return blockData.block.header.number.toNumber();
 }
 export function parseChainEvent({ events = [], status }) {
     if (status.isInvalid) {
-        console.error("isError");
+        alert("Extrinsic is invalid.");
     }
     else if (status.isFinalized || status.isInBlock) {
         events.forEach((eventRecord) => {
@@ -25,13 +26,55 @@ export function parseChainEvent({ events = [], status }) {
             }
         });
     }
+    else {
+        console.error("unknown status: ", status.toString());
+    }
 }
 export async function submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey) {
     const injector = await web3FromSource(signingAccount.meta.source);
-    await extrinsic.signAndSend(signingKey, { signer: injector.signer }, { nonce: -1 }, parseChainEvent);
+    let currentTxDone = false;
+    try {
+        function sendStatusCb({ events = [], status }) {
+            if (status.isInvalid) {
+                alert('Transaction invalid');
+                currentTxDone = true;
+            }
+            else if (status.isReady) {
+                console.info('Transaction is ready');
+            }
+            else if (status.isBroadcast) {
+                console.info('Transaction has been broadcasted');
+            }
+            else if (status.isInBlock) {
+                console.info('Transaction is in block');
+            }
+            else if (status.isFinalized) {
+                console.log(`Transaction has been included in blockHash ${status.asFinalized.toHex()}`);
+                events.forEach(({ event }) => {
+                    if (event.method === 'ExtrinsicSuccess') {
+                        alert('Transaction succeeded');
+                    }
+                    else if (event.method === 'ExtrinsicFailed') {
+                        alert('Transaction failed');
+                    }
+                });
+                currentTxDone = true;
+            }
+        }
+        await extrinsic.signAndSend(signingKey, { signer: injector.signer }, { nonce: -1 }, sendStatusCb);
+        await waitFor(() => currentTxDone);
+    }
+    catch {
+        alert("Awaiting transaction results timed out.  Check the chain for events or a failed transaction.");
+    }
 }
 export async function submitExtrinsicWithKeyring(extrinsic, signingAccount) {
-    await extrinsic.signAndSend(signingAccount, { nonce: -1 }, parseChainEvent);
+    try {
+        await extrinsic.signAndSend(signingAccount, { nonce: -1 }, parseChainEvent);
+    }
+    catch (e) {
+        alert(`There was a problem:  ${e.toString()}`);
+    }
 }
 // converting to Sr25519Signature is very important, otherwise the signature length
 // is incorrect - just using signature gives:
@@ -46,14 +89,26 @@ export async function signPayloadWithExtension(signingAccount, signingKey, paylo
         const signerPayloadRaw = {
             address: signingAccount.address, data: payloadWrappedToU8a, type: 'bytes'
         };
-        signed = await signRaw(signerPayloadRaw);
-        return signed?.signature;
+        try {
+            signed = await signRaw(signerPayloadRaw);
+            return signed?.signature;
+        }
+        catch (e) {
+            alert(`Signing failed: ${e.message}`);
+            return "ERROR " + e.message;
+        }
     }
-    return "";
+    return "Unknown error";
 }
 // returns a properly formatted signature to submit with an extrinsic
 export function signPayloadWithKeyring(signingAccount, payload) {
-    return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
+    try {
+        return u8aToHex(signingAccount.sign(wrapToU8a(payload)));
+    }
+    catch (e) {
+        alert(`Signing failed: ${e.message}`);
+        return "ERROR " + e.message;
+    }
 }
 export async function getCurrentPaginatedHash(api, msaId, schemaId, page_id) {
     const result = await api.rpc.statefulStorage.getPaginatedStorage(msaId, schemaId);
