@@ -4,7 +4,7 @@ export async function sleep (ms: number): Promise<void> {
 
 type WaitOptions = { interval?: number, timeout?: number};
 
-export async function waitFor (predicate: () => Promise<boolean> | boolean, { interval = 500, timeout = 12000 }: WaitOptions = {}): Promise<boolean> {
+export async function waitFor (predicate: () => Promise<boolean> | boolean, { interval = 500, timeout = 36000 }: WaitOptions = {}): Promise<boolean> {
     const asyncPredicate = () => Promise.resolve(predicate());
     let elapsed = 0;
     while (!(await asyncPredicate())) {

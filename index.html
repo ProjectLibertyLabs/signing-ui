@@ -3,6 +3,7 @@
     <meta charset="UTF-8">
     <title>Frequency Signing dApp</title>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="stylesheet" href="//unpkg.com/mvp.css@1.12/mvp.css">
     <style>
         .hidden {
             display: none;
@@ -36,25 +37,30 @@
             animation: flash 1s ease-out infinite alternate;
             margin-left: 90px;
         }
-        #txProcessingContainer h3 { padding: 60px; margin: 0 auto;}
-        .loaderContainer { display: none; }
-        .isProcessing {
-            position: absolute;
-            top: 22px;
-            height: 400px;
-            width: 800px;
-            margin: 22px;
-            background: #DEE8F6;
-            border: #cccccc;
+        #txProcessingContainer {
+            display: block;
+            padding: 22px;
+            border: 1px solid var(--color-bg-secondary);
+            border-radius: 0 2px;
         }
-    </style>
+        @keyframes flash {
+            0% {
+                background-color: var(--color-link);
+                box-shadow: 32px 0 var(--color-link), -32px 0 var(--color-accent);
+            }
+
+            50% {
+                background-color: var(--color-accent);
+                box-shadow: 32px 0 var(--color-link), -32px 0 var(--color-link);
+            }
+
+            100% {
+                background-color: var(--color-link);
+                box-shadow: 32px 0 var(--color-accent), -32px 0 var(--color-link);
+            }
+        }    </style>
 </head>
 <body style="margin: 22px;">
-<div id="txProcessingContainer" class="loaderContainer">
-    <h3>Please wait</h3>
-    <span id="txProcessing" class="loader"></span>
-    <br>
-</div>
 <form id="setupForm">
     <label for="provider-list">Choose an Endpoint</label>
     <select id="provider-list" required>
@@ -272,8 +278,13 @@
             <button type="button" id="delete_page_with_signature_sign_button">Sign payload</button>
             <button type="button" id="delete_page_with_signature_submit_button">Submit extrinsic</button>
         </form>
-    </div>
+        <div id="txProcessingContainer">
+            <p><strong>Transaction results</strong></p>
+            <span id="txProcessing" class="loader"></span>
+            <div id="status"></div>
+        </div>
 
+    </div>
     <div id='payload' class="hidden">
         <form id="payload_signatures" class="clear_on_reset disable_on_reset">
             <label for="signed_payload">Signed Payload</label>
@@ -289,7 +300,6 @@
 
 
 <footer>
-    <link rel="stylesheet" href="//unpkg.com/mvp.css@1.12/mvp.css">
     <script src="./built/index.js" type="module"></script>
 </footer>
 </body>

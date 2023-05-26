@@ -5,75 +5,88 @@ import { u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
 import { waitFor } from "./util.js";
+import { showStatus } from "./domActions.js";
 export async function getBlockNumber(api) {
     let blockData = await api.rpc.chain.getBlock();
     return blockData.block.header.number.toNumber();
 }
-export function parseChainEvent({ events = [], status }) {
+function parseChainEvent({ events = [], status }) {
     if (status.isInvalid) {
-        alert("Extrinsic is invalid.");
+        showStatus("Invalid transaction");
+        return;
     }
-    else if (status.isFinalized || status.isInBlock) {
-        events.forEach((eventRecord) => {
-            if (eventRecord.event.section === 'system') {
-                const chainEvent = eventRecord.event.toHuman();
-                if (chainEvent.method === 'ExtrinsicSuccess') {
-                    alert('Transaction succeeded');
-                }
-                else if (chainEvent.method === 'ExtrinsicFailed') {
-                    alert(`Transaction failed with error: ${chainEvent.toString()}`);
-                }
+    else if (status.isFinalized) {
+        showStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
+        events.forEach(({ event }) => {
+            if (event.method === 'ExtrinsicSuccess') {
+                showStatus('Transaction succeeded');
+            }
+            else if (event.method === 'ExtrinsicFailed') {
+                showStatus('Transaction failed. See chain explorer for details.');
             }
         });
+        return;
+    }
+    else if (status.isInBlock) {
+        showStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
     }
     else {
-        console.error("unknown status: ", status.toString());
+        if (!!status?.status) {
+            showStatus(status.toHuman());
+        }
     }
 }
-export async function submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey) {
+export async function submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, onTxDone) {
     const injector = await web3FromSource(signingAccount.meta.source);
     let currentTxDone = false;
     try {
         function sendStatusCb({ events = [], status }) {
             if (status.isInvalid) {
-                alert('Transaction invalid');
+                alert('Transaction is Invalid');
                 currentTxDone = true;
             }
             else if (status.isReady) {
-                console.info('Transaction is ready');
+                showStatus("Transaction is Ready");
             }
             else if (status.isBroadcast) {
-                console.info('Transaction has been broadcasted');
+                showStatus("Transaction is Broadcast");
             }
             else if (status.isInBlock) {
-                console.info('Transaction is in block');
+                showStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
             }
             else if (status.isFinalized) {
-                console.log(`Transaction has been included in blockHash ${status.asFinalized.toHex()}`);
+                showStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
                 events.forEach(({ event }) => {
                     if (event.method === 'ExtrinsicSuccess') {
-                        alert('Transaction succeeded');
+                        showStatus('Transaction succeeded');
                     }
                     else if (event.method === 'ExtrinsicFailed') {
-                        alert('Transaction failed');
+                        showStatus('Transaction failed. See chain explorer for details.');
                     }
                 });
                 currentTxDone = true;
             }
         }
-        await extrinsic.signAndSend(signingKey, { signer: injector.signer }, { nonce: -1 }, sendStatusCb);
+        await extrinsic.signAndSend(signingKey, { signer: injector.signer, nonce: -1 }, sendStatusCb);
         await waitFor(() => currentTxDone);
     }
-    catch {
-        alert("Awaiting transaction results timed out.  Check the chain for events or a failed transaction.");
+    catch (e) {
+        showStatus(e.message);
+        console.info("Timeout reached, transaction was invalid, or transaction was canceled by user. currentTxDone: ", currentTxDone);
+    }
+    finally {
+        onTxDone();
     }
 }
-export async function submitExtrinsicWithKeyring(extrinsic, signingAccount) {
+export async function submitExtrinsicWithKeyring(extrinsic, signingAccount, onTxDone) {
     try {
         await extrinsic.signAndSend(signingAccount, { nonce: -1 }, parseChainEvent);
     }
     catch (e) {
         alert(`There was a problem:  ${e.toString()}`);
+    }
+    finally {
+        onTxDone();
     }
 }
 // converting to Sr25519Signature is very important, otherwise the signature length

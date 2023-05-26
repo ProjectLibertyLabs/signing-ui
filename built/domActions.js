@@ -8,15 +8,14 @@ export function setProgress(id, isInProgress) {
     const submitButton = document.getElementById(id);
     const spinnerContainer = document.getElementById('txProcessingContainer');
     if (isInProgress) {
+        document.getElementById('status').innerText = "";
         submitButton.disabled = true;
-        // spinner.style.display = "block";
-        spinnerContainer.style.display = "block";
+        spinner.style.display = "block";
         spinnerContainer.setAttribute("class", "isProcessing");
     }
     else {
         submitButton.disabled = false;
-        // spinner.style.display = "none";
-        spinnerContainer.style.display = "none";
+        spinner.style.display = "none";
         spinnerContainer.setAttribute("class", "");
     }
 }
@@ -204,4 +203,9 @@ export async function getDeletePageWithSignatureFormData(api) {
     };
     const payload = api.registry.createType("PalletStatefulStoragePaginatedUpsertSignaturePayload", upsertPayload);
     return { signingKey, delegatorKey, payload, signatures };
+}
+export function showStatus(status) {
+    let newEl = document.createElement("p");
+    newEl.innerText = status;
+    document.getElementById('status').appendChild(newEl);
 }

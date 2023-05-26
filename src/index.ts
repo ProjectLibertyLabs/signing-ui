@@ -29,13 +29,11 @@ import {
 
 import {
     getBlockNumber,
-    getCurrentItemizedHash,
     signPayloadWithExtension,
     signPayloadWithKeyring,
     submitExtrinsicWithExtension,
     submitExtrinsicWithKeyring,
 } from "./chainActions.js";
-import {ItemizedSignaturePayload} from "./types.js";
 
 // const Hash = interfaces.Hash;
 
@@ -219,6 +217,7 @@ function resetForms() {
         const item = toBeCleared.item(i) as HTMLInputElement
         item.disabled = false; 
     }
+    (document.getElementById('status') as HTMLElement).innerHTML="";
 
     if (selectedExtrinsic.value !== "handles_claim_handle") {
         setVisibility(selectedExtrinsic.value, false);
@@ -236,8 +235,8 @@ async function createMsa(event: Event) {
     const extrinsic = singletonApi.tx.msa.create();
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair) :
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
     setProgress(submitButtonId, false)
 }
 
@@ -246,6 +245,7 @@ async function signClaimHandle(event: Event) {
     const formId = 'handles_claim_handle';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
     const { signingKey, payload} = getClaimHandleFormData(singletonApi);
     const signingAccount = validAccounts[signingKey];
 
@@ -263,20 +263,23 @@ async function signClaimHandle(event: Event) {
 
 async function submitClaimHandle(event: Event) {
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'handles_claim_handle';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
 
-    const { signingKey, delegatorKey, signatures, payload } = getClaimHandleFormData(singletonApi);
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
+
+
+    const { signingKey, signatures, payload } = getClaimHandleFormData(singletonApi);
     const signingAccount = validAccounts[signingKey];
     const proof = { Sr25519: signatures[0] };
     const extrinsic = singletonApi.tx.handles.claimHandle(signingKey, proof, payload.toU8a());
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
-    setProgress(submitButtonId, false)
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
+
 }
 
 
@@ -309,10 +312,13 @@ async function signAddPublicKeyToMsa(event: Event) {
 
 async function submitAddPublicKeyToMsa(event: Event) {
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
+
     const formId = 'msa_add_public_key_to_msa';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
 
     const { signingKey, signatures, payload } = getAddPublicKeyFormData(singletonApi);
     const signingAccount = validAccounts[signingKey];
@@ -322,8 +328,8 @@ async function submitAddPublicKeyToMsa(event: Event) {
     const extrinsic = singletonApi.tx.msa.addPublicKeyToMsa(signingAccount.address, ownerKeyProof, newKeyProof, payload.toU8a());
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
 
     setProgress(submitButtonId, false)
 }
@@ -356,10 +362,13 @@ async function signCreateSponsoredAccountWithDelegation(event: Event) {
 
 async function submitCreateSponsoredAccountWithDelegation(event: Event) {
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
+
     const formId = 'msa_create_sponsored_account_with_delegation';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
 
     const {signingKey, delegatorKey, signatures, payload} = getCreateSponsoredAccountFormData(singletonApi);
     const signingAccount = validAccounts[signingKey];
@@ -368,8 +377,8 @@ async function submitCreateSponsoredAccountWithDelegation(event: Event) {
     const extrinsic = singletonApi.tx.msa.createSponsoredAccountWithDelegation(delegatorKey, proof, payload.toU8a())
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
     setProgress(submitButtonId, false)
 }
 
@@ -392,10 +401,13 @@ async function signGrantDelegation(event: Event) {
 
 async function submitGrantDelegation(event: Event) {
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'msa_grant_delegation';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
+
     const {signingKey, delegatorKey, signatures, payload} = getGrantDelegationFormData(singletonApi);
 
     const signingAccount = validAccounts[signingKey];
@@ -404,8 +416,8 @@ async function submitGrantDelegation(event: Event) {
     const extrinsic = singletonApi.tx.msa.grantDelegation(delegatorKey, proof, payload.toU8a())
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
     setProgress(submitButtonId, false)
 }
 
@@ -427,10 +439,12 @@ async function signApplyItemActionsWithSignature(event: Event) {
 
 async function submitApplyItemActionsWithSignature(event: Event) {
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'stateful_storage_apply_item_actions_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
 
     const {delegatorKey, payload, signatures} = await getApplyItemActionsWithSignatureFormData(singletonApi);
 
@@ -442,8 +456,8 @@ async function submitApplyItemActionsWithSignature(event: Event) {
     const signingAccount = validAccounts[signingKey];
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
     setProgress(submitButtonId, false)
 }
 
@@ -465,10 +479,12 @@ async function signUpsertPageWithSignature(event: Event) {
 }
 async function submitUpsertPageWithSignature(event: Event) {
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'stateful_storage_upsert_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
 
     const { signingKey, delegatorKey, payload, signatures} = await getUpsertPageFormData(singletonApi);
     const proof = { Sr25519: signatures[0] };
@@ -477,8 +493,8 @@ async function submitUpsertPageWithSignature(event: Event) {
     const signingAccount = validAccounts[signingKey];
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
     setProgress(submitButtonId, false)
 }
 
@@ -501,10 +517,12 @@ async function signDeletePageWithSignature(event: Event){
 }
 async function submitDeletePageWithSignature(event: Event){
     event.preventDefault();
-    let submitButtonId = (event.target as HTMLElement).id
     const formId = 'stateful_storage_delete_page_with_signature';
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
+
+    let submitButtonId = (event.target as HTMLElement).id
+    setProgress(submitButtonId, true);
 
     const { signingKey, delegatorKey, payload, signatures} = await getDeletePageWithSignatureFormData(singletonApi);
     const proof = { Sr25519: signatures[0] };
@@ -512,8 +530,8 @@ async function submitDeletePageWithSignature(event: Event){
     const signingAccount = validAccounts[signingKey];
 
     providerName === 'localhost' ?
-        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair):
-        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey);
+        await submitExtrinsicWithKeyring(extrinsic, signingAccount as KeyringPair, () => setProgress(submitButtonId, false)):
+        await submitExtrinsicWithExtension(extrinsic, signingAccount, signingKey, () => setProgress(submitButtonId, false));
     setProgress(submitButtonId, false)
 }
 
