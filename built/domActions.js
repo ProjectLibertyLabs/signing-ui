@@ -123,8 +123,8 @@ export function getCreateSponsoredAccountFormData(api) {
     const authorizedMsaId = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_provider'));
     const expiration = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_expiration'));
     const schemaIds = getHTMLInputValue('create_sponsored_account_with_delegation_schema_ids')
-        .split(/,\s+?/)
-        .map(item => parseInt(item));
+        .split(",")
+        .map(item => parseInt(item.trim()));
     const signatures = [getHTMLInputValue('signed_payload')];
     const rawPayload = { authorizedMsaId, expiration, schemaIds };
     const payload = api.registry.createType("PalletMsaAddProvider", rawPayload);
@@ -136,8 +136,8 @@ export function getGrantDelegationFormData(api) {
     const authorizedMsaId = parseInt(getHTMLInputValue('grant_delegation_provider'));
     const expiration = parseInt(getHTMLInputValue('grant_delegation_expiration'));
     const schemaIds = getHTMLInputValue('grant_delegation_schema_ids')
-        .split(/,\s+?/)
-        .map(item => parseInt(item));
+        .split(",")
+        .map(item => parseInt(item.trim()));
     const signatures = [getHTMLInputValue('signed_payload')];
     const rawPayload = { authorizedMsaId, expiration, schemaIds };
     const payload = api.registry.createType("PalletMsaAddProvider", rawPayload);

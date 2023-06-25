@@ -209,13 +209,13 @@ function resetForms() {
     const toBeCleared  = document.getElementsByClassName('clear_on_reset') as HTMLCollectionOf<HTMLInputElement>;
     for (let i=0; i<toBeCleared.length; i++) {
         const item = toBeCleared.item(i) as HTMLInputElement
-        item.value = ''; 
+        item.value = '';
     }
 
     const toBeDisabled = document.getElementsByClassName('disable_on_reset') as HTMLCollectionOf<HTMLInputElement>;
     for (let i=0; i<toBeDisabled.length; i++) {
         const item = toBeCleared.item(i) as HTMLInputElement
-        item.disabled = false; 
+        item.disabled = false;
     }
     (document.getElementById('status') as HTMLElement).innerHTML="";
 
@@ -346,8 +346,8 @@ async function signCreateSponsoredAccountWithDelegation(event: Event) {
     const authorizedMsaId = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_provider'));
     const expiration = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_expiration'));
     const schemaIds = getHTMLInputValue('create_sponsored_account_with_delegation_schema_ids')
-        .split(/,\s+?/)
-        .map(item => parseInt(item));
+        .split(",")
+        .map(item => parseInt(item.trim()));
 
     const rawPayload = { authorizedMsaId, expiration, schemaIds }
     const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);

@@ -275,8 +275,8 @@ async function signCreateSponsoredAccountWithDelegation(event) {
     const authorizedMsaId = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_provider'));
     const expiration = parseInt(getHTMLInputValue('create_sponsored_account_with_delegation_expiration'));
     const schemaIds = getHTMLInputValue('create_sponsored_account_with_delegation_schema_ids')
-        .split(/,\s+?/)
-        .map(item => parseInt(item));
+        .split(",")
+        .map(item => parseInt(item.trim()));
     const rawPayload = { authorizedMsaId, expiration, schemaIds };
     const payload = singletonApi.registry.createType("PalletMsaAddProvider", rawPayload);
     const signature = providerName == 'localhost' ?
