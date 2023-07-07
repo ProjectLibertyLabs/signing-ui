@@ -5,34 +5,34 @@ import { u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
 import { waitFor } from "./util.js";
-import { showStatus } from "./domActions.js";
+import { showExtrinsicStatus } from "./domActions.js";
 export async function getBlockNumber(api) {
     let blockData = await api.rpc.chain.getBlock();
     return blockData.block.header.number.toNumber();
 }
 function parseChainEvent({ events = [], status }) {
     if (status.isInvalid) {
-        showStatus("Invalid transaction");
+        showExtrinsicStatus("Invalid transaction");
         return;
     }
     else if (status.isFinalized) {
-        showStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
+        showExtrinsicStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
         events.forEach(({ event }) => {
             if (event.method === 'ExtrinsicSuccess') {
-                showStatus('Transaction succeeded');
+                showExtrinsicStatus('Transaction succeeded');
             }
             else if (event.method === 'ExtrinsicFailed') {
-                showStatus('Transaction failed. See chain explorer for details.');
+                showExtrinsicStatus('Transaction failed. See chain explorer for details.');
             }
         });
         return;
     }
     else if (status.isInBlock) {
-        showStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
+        showExtrinsicStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
     }
     else {
         if (!!status?.status) {
-            showStatus(status.toHuman());
+            showExtrinsicStatus(status.toHuman());
         }
     }
 }
@@ -46,22 +46,22 @@ export async function submitExtrinsicWithExtension(extrinsic, signingAccount, si
                 currentTxDone = true;
             }
             else if (status.isReady) {
-                showStatus("Transaction is Ready");
+                showExtrinsicStatus("Transaction is Ready");
             }
             else if (status.isBroadcast) {
-                showStatus("Transaction is Broadcast");
+                showExtrinsicStatus("Transaction is Broadcast");
             }
             else if (status.isInBlock) {
-                showStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
+                showExtrinsicStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
             }
             else if (status.isFinalized) {
-                showStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
+                showExtrinsicStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
                 events.forEach(({ event }) => {
                     if (event.method === 'ExtrinsicSuccess') {
-                        showStatus('Transaction succeeded');
+                        showExtrinsicStatus('Transaction succeeded');
                     }
                     else if (event.method === 'ExtrinsicFailed') {
-                        showStatus('Transaction failed. See chain explorer for details.');
+                        showExtrinsicStatus('Transaction failed. See chain explorer for details.');
                     }
                 });
                 currentTxDone = true;
@@ -71,7 +71,7 @@ export async function submitExtrinsicWithExtension(extrinsic, signingAccount, si
         await waitFor(() => currentTxDone);
     }
     catch (e) {
-        showStatus(e.message);
+        showExtrinsicStatus(e.message);
         console.info("Timeout reached, transaction was invalid, or transaction was canceled by user. currentTxDone: ", currentTxDone);
     }
     finally {

@@ -4,77 +4,34 @@
     <title>Frequency Signing dApp</title>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <link rel="stylesheet" href="//unpkg.com/mvp.css@1.12/mvp.css">
-    <style>
-        .hidden {
-            display: none;
-        }
-        .ready {
-            display: block;
-        }
-        .container {
-            display: flex;
-            align-items: stretch;
-        }
-        .container div {
-            flex-grow: 1;
-        }
-        #payload #payload_signatures textarea {
-            height: 100px;
-        }
-        .invalid {
-            border-color: red;
-            border-width: 2px;
-        }
-
-        /* Spinner */
-        .loader {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: var(--color-accent);
-            box-shadow: 32px 0 var(--color-accent), -32px 0 var(--color-accent);
-            position: relative;
-            animation: flash 1s ease-out infinite alternate;
-            margin-left: 90px;
-        }
-        #txProcessingContainer {
-            display: block;
-            padding: 22px;
-            border: 1px solid var(--color-bg-secondary);
-            border-radius: 0 2px;
-        }
-        @keyframes flash {
-            0% {
-                background-color: var(--color-link);
-                box-shadow: 32px 0 var(--color-link), -32px 0 var(--color-accent);
-            }
-
-            50% {
-                background-color: var(--color-accent);
-                box-shadow: 32px 0 var(--color-link), -32px 0 var(--color-link);
-            }
-
-            100% {
-                background-color: var(--color-link);
-                box-shadow: 32px 0 var(--color-accent), -32px 0 var(--color-link);
-            }
-        }    </style>
+    <link rel="stylesheet" href="/index.css">
 </head>
 <body style="margin: 22px;">
+<div id="connection-info">
+    <h3>Connection status: <span id="connection-status">not connected</span></h3>
+    <p>Token: <span id="unit">...</span></p>
+    <p>Current block number: <span id="current-block"></span></p>
+</div>
 <form id="setupForm">
     <label for="provider-list">Choose an Endpoint</label>
     <select id="provider-list" required>
         <option value="wss://rpc.rococo.frequency.xyz" name="rococo">Rococo</option>
         <option value="ws://localhost:9944" name="localhost">Localhost</option>
+        <option id="other-endpoint-value">Other endpoint</option>
     </select>
 
-    <label for="signing-address">Signing Address</label>
-    <select id="signing-address" required></select>
+    <fieldset id="other-endpoint">
+        <label for="other-endpoint-url">WSS Endpoint</label>
+        <input id="other-endpoint-url" placeholder="wss://some.frequency.node"/>
+    </fieldset>
 
-    <button type="button" id="connectButton">Connect to Node</button>
+    <button type="button" id="connect-button">Connect to Node</button>
 
-    <p>Token: <span id="unit">...</span></p>
-    <p>Current block number: <span id="current-block"></span></p>
+    <fieldset id="transaction-signing-address" class="hidden">
+        <label for="signing-address">Sign Transaction with This Address</label>
+        <select id="signing-address" required></select>
+    </fieldset>
+
     <p>For itemized schema on Rococo, use Schema ID = 56</p>
     <p>For paginated schema on Rococo, use Schema ID = 57</p>
 </form>

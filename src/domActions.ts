@@ -32,11 +32,13 @@ export function setProgress(id: string, isInProgress: boolean) {
     }
 }
 export function setVisibility(id: string, isVisible: boolean) {
-    let classes = document.getElementById(id)?.getAttribute('class') || "";
-    if (isVisible) {
-        classes = classes.split(' ').filter(c => c !== 'hidden').join(' ')
-    } else {
-        classes = classes + ' hidden';
+    let el = document.getElementById(id);
+    if (el) {
+        if (isVisible) {
+            el.classList.remove('hidden');
+        } else {
+            !el.classList.contains('hidden') && el.classList.add('hidden')
+        }
     }
     document.getElementById(id)?.setAttribute("class", classes);
 }
@@ -136,7 +138,6 @@ export function getAddPublicKeyFormData(api: ApiPromise): ExtrinsicFormData {
         newPublicKey: delegatorKey,
     }
     const payload = api.registry.createType("PalletMsaAddKeyData", rawPayload);
-
     return {signingKey, delegatorKey, signatures, payload}
 }
 
@@ -266,8 +267,13 @@ export async function getDeletePageWithSignatureFormData(api: ApiPromise): Promi
 
 }
 
-export function showStatus(status: string) {
+export function showExtrinsicStatus(status: string) {
     let newEl = document.createElement("p");
     newEl.innerText = status;
     (document.getElementById('status') as HTMLElement).appendChild(newEl);
+}
+
+export function checkShowOtherInput(_event: unknown) {
+    let selectEl = document.getElementById('provider-list') as HTMLSelectElement;
+    setVisibility('other-endpoint', !!selectEl.selectedOptions.namedItem('other-endpoint-value'))
 }

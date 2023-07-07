@@ -17,7 +17,7 @@ import { PageId, PaginatedStorageResponse } from "@frequency-chain/api-augment/i
 import {InjectedAccountWithMeta} from "https://cdn.jsdelivr.net/npm/@polkadot/extension-inject@0.46.3/+esm";
 
 import { waitFor } from "./util.js";
-import {showStatus} from "./domActions.js";
+import {showExtrinsicStatus} from "./domActions.js";
 
 export async function getBlockNumber(api: ApiPromise): Promise<number> {
     let blockData = await api.rpc.chain.getBlock();
@@ -26,25 +26,25 @@ export async function getBlockNumber(api: ApiPromise): Promise<number> {
 
 function parseChainEvent ({ events = [], status }: { events?: EventRecord[], status: ExtrinsicStatus; }): void {
     if (status.isInvalid) {
-        showStatus("Invalid transaction");
+        showExtrinsicStatus("Invalid transaction");
         return;
     } else if ( status.isFinalized ) {
-        showStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
+        showExtrinsicStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
         events.forEach(
             ({event}) => {
                 if (event.method === 'ExtrinsicSuccess') {
-                    showStatus('Transaction succeeded');
+                    showExtrinsicStatus('Transaction succeeded');
                 } else if (event.method === 'ExtrinsicFailed') {
-                    showStatus('Transaction failed. See chain explorer for details.');
+                    showExtrinsicStatus('Transaction failed. See chain explorer for details.');
                 }
             }
         );
         return;
     } else if (status.isInBlock) {
-        showStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
+        showExtrinsicStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
     } else {
         if (!!status?.status) {
-            showStatus(status.toHuman())
+            showExtrinsicStatus(status.toHuman())
         }
     }
 }
@@ -58,19 +58,19 @@ export async function submitExtrinsicWithExtension(extrinsic: any, signingAccoun
                 alert('Transaction is Invalid');
                 currentTxDone = true;
             } else if (status.isReady) {
-                showStatus("Transaction is Ready");
+                showExtrinsicStatus("Transaction is Ready");
             } else if (status.isBroadcast) {
-                showStatus("Transaction is Broadcast");
+                showExtrinsicStatus("Transaction is Broadcast");
             } else if (status.isInBlock) {
-                showStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
+                showExtrinsicStatus(`Transaction is included in blockHash ${status.asInBlock.toHex()}`);
             } else if (status.isFinalized) {
-                showStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
+                showExtrinsicStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
                 events.forEach(
                     ({event}) => {
                         if (event.method === 'ExtrinsicSuccess') {
-                            showStatus('Transaction succeeded');
+                            showExtrinsicStatus('Transaction succeeded');
                         } else if (event.method === 'ExtrinsicFailed') {
-                            showStatus('Transaction failed. See chain explorer for details.');
+                            showExtrinsicStatus('Transaction failed. See chain explorer for details.');
                         }
                     }
                 );
@@ -81,7 +81,7 @@ export async function submitExtrinsicWithExtension(extrinsic: any, signingAccoun
         await extrinsic.signAndSend(signingKey, {signer: injector.signer, nonce: -1}, sendStatusCb);
         await waitFor(() => currentTxDone);
     } catch(e) {
-        showStatus((e as Error).message);
+        showExtrinsicStatus((e as Error).message);
         console.info("Timeout reached, transaction was invalid, or transaction was canceled by user. currentTxDone: ", currentTxDone);
     } finally {
         onTxDone();

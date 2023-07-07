@@ -25,6 +25,7 @@ import {
     getClaimHandleFormData,
     getUpsertPageFormData, getDeletePageWithSignatureFormData,
     setProgress,
+    checkShowOtherInput,
 } from "./domActions.js";
 
 import {
@@ -111,35 +112,50 @@ function registerExtrinsicsButtonHandlers() {
     }
 }
 
+function showConnectedElements() {
+    setVisibility('create_msa_form', true);
+    setVisibility('extrinsics_forms', true);
+    setVisibility('payload', true)
+}
+
+async function updateConnectionStatus(api) {
+    const chain = await api.rpc.system.properties();
+    PREFIX = Number(chain.ss58Format.toString());
+    UNIT = chain.tokenSymbol.toString();
+    (document.getElementById("unit") as HTMLElement).innerText = UNIT;
+    let blockNumber = await getBlockNumber(singletonApi);
+    (document.getElementById("current-block") as HTMLElement).innerHTML = blockNumber.toString();
+}
+
 // Connect to the wallet and blockchain
 async function connect(event: Event) {
     event.preventDefault();
-    setProgress("connectButton", true);
+    setProgress("connect-button", true);
     let selectedProvider = getSelectedOption('provider-list');
-    providerName = selectedProvider.getAttribute("name") || "";
-    const api = await getApi(selectedProvider.value);
-
-    if (api) {
-        const chain = await api.rpc.system.properties();
-        PREFIX = Number(chain.ss58Format.toString());
-        UNIT = chain.tokenSymbol.toString();
-        (document.getElementById("unit") as HTMLElement).innerText = UNIT;
-        let blockNumber = await getBlockNumber(singletonApi);
-        (document.getElementById("current-block") as HTMLElement).innerHTML = blockNumber.toString();
-
+    let api;
+    try {
+        if (selectedProvider.id === 'other-endpoint-value') {
+            providerName = getHTMLInputValue('other-endpoint-url');
+            api = await getApi(providerName);
+        } else {
+            selectedProvider.getAttribute("name") || "";
+            api = await getApi(selectedProvider.value);
+        }
+        await updateConnectionStatus(api);
         await loadAccounts();
         (document.getElementById("setupExtrinsic") as HTMLElement).setAttribute("class", "ready");
-        setProgress("connectButton", true);
-        setVisibility('create_msa_form', true);
-        setVisibility('extrinsics_forms', true);
-        setVisibility('payload', true)
+        setProgress("connect-button", true);
+        showConnectedElements();
         resetForms()
         listenForExtrinsicsChange();
         registerExtrinsicsButtonHandlers();
-    } else {
-        alert(`could not connect to ${providerName}`)
+    } catch {
+        alert(`could not connect to ${providerName || "empty value"}. Please enter a valid and reachable Websocket URL.`);
+    } finally {
+        (document.getElementById('connect-button') as HTMLInputElement).disabled = false;
+
     }
-    setProgress("connectButton", false);
+    setProgress("connect-button", false);
     return;
 }
 
@@ -537,7 +553,9 @@ async function submitDeletePageWithSignature(event: Event){
 
 
 function init() {
-    (document.getElementById("connectButton") as HTMLElement).addEventListener("click", connect);
+    checkShowOtherInput(undefined);
+    (document.getElementById('provider-list') as HTMLElement).addEventListener("change", checkShowOtherInput);
+    (document.getElementById("connect-button") as HTMLElement).addEventListener("click", connect);
 }
 
 init();

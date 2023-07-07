@@ -20,14 +20,15 @@ export function setProgress(id, isInProgress) {
     }
 }
 export function setVisibility(id, isVisible) {
-    let classes = document.getElementById(id)?.getAttribute('class') || "";
-    if (isVisible) {
-        classes = classes.split(' ').filter(c => c !== 'hidden').join(' ');
+    let el = document.getElementById(id);
+    if (el) {
+        if (isVisible) {
+            el.classList.remove('hidden');
+        }
+        else {
+            !el.classList.contains('hidden') && el.classList.add('hidden');
+        }
     }
-    else {
-        classes = classes + ' hidden';
-    }
-    document.getElementById(id)?.setAttribute("class", classes);
 }
 export function showExtrinsicForm(event) {
     event.preventDefault();
@@ -204,8 +205,12 @@ export async function getDeletePageWithSignatureFormData(api) {
     const payload = api.registry.createType("PalletStatefulStoragePaginatedUpsertSignaturePayload", upsertPayload);
     return { signingKey, delegatorKey, payload, signatures };
 }
-export function showStatus(status) {
+export function showExtrinsicStatus(status) {
     let newEl = document.createElement("p");
     newEl.innerText = status;
     document.getElementById('status').appendChild(newEl);
+}
+export function checkShowOtherInput(_event) {
+    let selectEl = document.getElementById('provider-list');
+    setVisibility('other-endpoint', !!selectEl.selectedOptions.namedItem('other-endpoint-value'));
 }
