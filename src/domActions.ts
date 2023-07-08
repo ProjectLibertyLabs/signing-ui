@@ -40,7 +40,6 @@ export function setVisibility(id: string, isVisible: boolean) {
             !el.classList.contains('hidden') && el.classList.add('hidden')
         }
     }
-    document.getElementById(id)?.setAttribute("class", classes);
 }
 
 export function showExtrinsicForm(event: Event) {

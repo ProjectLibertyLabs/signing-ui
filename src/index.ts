@@ -113,9 +113,14 @@ function registerExtrinsicsButtonHandlers() {
 }
 
 function showConnectedElements() {
-    setVisibility('create_msa_form', true);
-    setVisibility('extrinsics_forms', true);
-    setVisibility('payload', true)
+    [
+        'create_msa_form',
+        'extrinsics_forms',
+        'payload',
+        'transaction-signing-address',
+    ].forEach((elementId) => {
+        setVisibility(elementId, true);
+    });
 }
 
 async function updateConnectionStatus(api) {
