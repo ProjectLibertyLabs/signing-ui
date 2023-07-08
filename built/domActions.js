@@ -210,7 +210,7 @@ export function showExtrinsicStatus(status) {
     newEl.innerText = status;
     document.getElementById('status').appendChild(newEl);
 }
-export function checkShowOtherInput(_event) {
+export function onProviderEndpointChanged(_event) {
     let selectEl = document.getElementById('provider-list');
     setVisibility('other-endpoint', !!selectEl.selectedOptions.namedItem('other-endpoint-value'));
 }

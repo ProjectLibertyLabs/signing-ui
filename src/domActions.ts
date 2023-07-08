@@ -272,7 +272,7 @@ export function showExtrinsicStatus(status: string) {
     (document.getElementById('status') as HTMLElement).appendChild(newEl);
 }
 
-export function checkShowOtherInput(_event: unknown) {
+export function onProviderEndpointChanged(_event: unknown) {
     let selectEl = document.getElementById('provider-list') as HTMLSelectElement;
-    setVisibility('other-endpoint', !!selectEl.selectedOptions.namedItem('other-endpoint-value'))
+    setVisibility('other-endpoint', !!selectEl.selectedOptions.namedItem('other-endpoint-value'));
 }

@@ -6,7 +6,7 @@ import { web3Accounts, web3Enable } from 'https://cdn.jsdelivr.net/npm/@polkadot
 import { Keyring } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm';
 // @ts-ignore
 import { options } from "https://cdn.jsdelivr.net/npm/@frequency-chain/api-augment@1.6.1/+esm";
-import { clearFormInvalid, getHTMLInputValue, getSelectedOption, getCreateSponsoredAccountFormData, getGrantDelegationFormData, listenForExtrinsicsChange, setVisibility, validateForm, getApplyItemActionsWithSignatureFormData, getAddPublicKeyFormData, getClaimHandleFormData, getUpsertPageFormData, getDeletePageWithSignatureFormData, setProgress, checkShowOtherInput, } from "./domActions.js";
+import { clearFormInvalid, getHTMLInputValue, getSelectedOption, getCreateSponsoredAccountFormData, getGrantDelegationFormData, listenForExtrinsicsChange, setVisibility, validateForm, getApplyItemActionsWithSignatureFormData, getAddPublicKeyFormData, getClaimHandleFormData, getUpsertPageFormData, getDeletePageWithSignatureFormData, setProgress, onProviderEndpointChanged, } from "./domActions.js";
 import { getBlockNumber, signPayloadWithExtension, signPayloadWithKeyring, submitExtrinsicWithExtension, submitExtrinsicWithKeyring, } from "./chainActions.js";
 // const Hash = interfaces.Hash;
 let PREFIX = 42;
@@ -39,12 +39,8 @@ const GENESIS_HASHES = {
     frequency: "0x4a587bf17a404e3572747add7aab7bbe56e805a5479c6c436f07f36fcc8d3ae1",
 };
 async function getApi(providerUri) {
-    // Singleton
-    if (!providerUri && singletonApi)
-        return singletonApi;
     if (!providerUri) {
-        // they didn't select anything
-        return null;
+        throw new Error("Empty providerURI");
     }
     // Handle disconnects
     if (providerUri) {
@@ -89,6 +85,7 @@ async function updateConnectionStatus(api) {
     document.getElementById("unit").innerText = UNIT;
     let blockNumber = await getBlockNumber(singletonApi);
     document.getElementById("current-block").innerHTML = blockNumber.toString();
+    document.getElementById('connection-status').innerText = "Connected";
 }
 // Connect to the wallet and blockchain
 async function connect(event) {
@@ -102,6 +99,7 @@ async function connect(event) {
             api = await getApi(providerName);
         }
         else {
+            providerName = selectedProvider.getAttribute('name');
             selectedProvider.getAttribute("name") || "";
             api = await getApi(selectedProvider.value);
         }
@@ -458,8 +456,8 @@ async function submitDeletePageWithSignature(event) {
     setProgress(submitButtonId, false);
 }
 function init() {
-    checkShowOtherInput(undefined);
-    document.getElementById('provider-list').addEventListener("change", checkShowOtherInput);
+    onProviderEndpointChanged(undefined);
+    document.getElementById('provider-list').addEventListener("change", onProviderEndpointChanged);
     document.getElementById("connect-button").addEventListener("click", connect);
 }
 init();

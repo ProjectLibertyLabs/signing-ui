@@ -25,7 +25,7 @@ import {
     getClaimHandleFormData,
     getUpsertPageFormData, getDeletePageWithSignatureFormData,
     setProgress,
-    checkShowOtherInput,
+    onProviderEndpointChanged,
 } from "./domActions.js";
 
 import {
@@ -77,11 +77,8 @@ const GENESIS_HASHES: Record<string, string> = {
 }
 
 async function getApi(providerUri: string) {
-    // Singleton
-    if (!providerUri && singletonApi) return singletonApi;
     if (!providerUri) {
-        // they didn't select anything
-        return null;
+        throw new Error("Empty providerURI");
     }
     // Handle disconnects
     if (providerUri) {
@@ -130,6 +127,7 @@ async function updateConnectionStatus(api) {
     (document.getElementById("unit") as HTMLElement).innerText = UNIT;
     let blockNumber = await getBlockNumber(singletonApi);
     (document.getElementById("current-block") as HTMLElement).innerHTML = blockNumber.toString();
+    (document.getElementById('connection-status') as HTMLElement).innerText = "Connected"
 }
 
 // Connect to the wallet and blockchain
@@ -143,6 +141,7 @@ async function connect(event: Event) {
             providerName = getHTMLInputValue('other-endpoint-url');
             api = await getApi(providerName);
         } else {
+            providerName = selectedProvider.getAttribute('name');
             selectedProvider.getAttribute("name") || "";
             api = await getApi(selectedProvider.value);
         }
@@ -558,8 +557,8 @@ async function submitDeletePageWithSignature(event: Event){
 
 
 function init() {
-    checkShowOtherInput(undefined);
-    (document.getElementById('provider-list') as HTMLElement).addEventListener("change", checkShowOtherInput);
+    onProviderEndpointChanged(undefined);
+    (document.getElementById('provider-list') as HTMLElement).addEventListener("change", onProviderEndpointChanged);
     (document.getElementById("connect-button") as HTMLElement).addEventListener("click", connect);
 }
 
