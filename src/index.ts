@@ -15,18 +15,22 @@ import {
     clearFormInvalid,
     getHTMLInputValue,
     getSelectedOption,
-    getCreateSponsoredAccountFormData,
-    getGrantDelegationFormData,
     listenForExtrinsicsChange,
     setVisibility,
     validateForm,
-    getApplyItemActionsWithSignatureFormData,
-    getAddPublicKeyFormData,
-    getClaimHandleFormData,
-    getUpsertPageFormData, getDeletePageWithSignatureFormData,
     setProgress,
     onProviderEndpointChanged,
 } from "./domActions.js";
+
+import {
+    getCreateSponsoredAccountFormData,
+    getGrantDelegationFormData,
+    getApplyItemActionsWithSignatureFormData,
+    getAddPublicKeyFormData,
+    getClaimHandleFormData,
+    getUpsertPageFormData,
+    getDeletePageWithSignatureFormData,
+} from "./formApiActions.js";
 
 import {
     getBlockNumber,
@@ -136,13 +140,13 @@ async function connect(event: Event) {
     setProgress("connect-button", true);
     let selectedProvider = getSelectedOption('provider-list');
     let api;
+    let providerName = "";
     try {
         if (selectedProvider.id === 'other-endpoint-value') {
-            providerName = getHTMLInputValue('other-endpoint-url');
+            providerName = getHTMLInputValue('other-endpoint-url') || "";
             api = await getApi(providerName);
         } else {
-            providerName = selectedProvider.getAttribute('name');
-            selectedProvider.getAttribute("name") || "";
+            providerName = selectedProvider.getAttribute("name") || "";
             api = await getApi(selectedProvider.value);
         }
         await updateConnectionStatus(api);
@@ -156,10 +160,8 @@ async function connect(event: Event) {
     } catch {
         alert(`could not connect to ${providerName || "empty value"}. Please enter a valid and reachable Websocket URL.`);
     } finally {
-        (document.getElementById('connect-button') as HTMLInputElement).disabled = false;
-
+        setProgress("connect-button", false);
     }
-    setProgress("connect-button", false);
     return;
 }
 
