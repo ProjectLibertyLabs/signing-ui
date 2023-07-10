@@ -94,7 +94,7 @@ export function clearFormInvalid(formId) {
 export function showExtrinsicStatus(status) {
     let newEl = document.createElement("p");
     newEl.innerText = status;
-    document.getElementById('status').appendChild(newEl);
+    document.getElementById('extrinsic-status').appendChild(newEl);
 }
 export function onProviderEndpointChanged(_event) {
     let selectEl = document.getElementById('provider-list');
