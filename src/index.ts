@@ -12,6 +12,7 @@ import {InjectedAccountWithMeta} from "https://cdn.jsdelivr.net/npm/@polkadot/ex
 import {options} from "https://cdn.jsdelivr.net/npm/@frequency-chain/api-augment@1.6.1/+esm";
 
 import {
+    domActionsSelectors,
     clearFormInvalid,
     getHTMLInputValue,
     getSelectedOption,
@@ -19,7 +20,7 @@ import {
     setVisibility,
     validateForm,
     setProgress,
-    onProviderEndpointChanged,
+    callAndRegisterProviderChangeEvent,
 } from "./domActions.js";
 
 import {
@@ -74,6 +75,17 @@ let formListeners: Record<string, EventHandler> = {
     'delete_page_with_signature_submit_button': submitDeletePageWithSignature,
 
 };
+
+const formSelectors = {
+    connectButton: "connect-button",
+    deletePageForm: 'stateful_storage_delete_page_with_signature',
+    upsertPageForm: 'stateful_storage_upsert_page_with_signature',
+    applyItemActionsForm: 'stateful_storage_apply_item_actions_with_signature',
+    grantDelegation: 'msa_grant_delegation',
+    createMsaWithDelegationForm: 'msa_create_sponsored_account_with_delegation',
+    addPublicKeyForm: 'msa_add_public_key_to_msa',
+    claimHandleForm: 'handles_claim_handle',
+}
 
 const GENESIS_HASHES: Record<string, string> = {
     rococo: "0x0c33dfffa907de5683ae21cc6b4af899b5c4de83f3794ed75b2dc74e1b088e72",
@@ -137,13 +149,13 @@ async function updateConnectionStatus(api) {
 // Connect to the wallet and blockchain
 async function connect(event: Event) {
     event.preventDefault();
-    setProgress("connect-button", true);
-    let selectedProvider = getSelectedOption('provider-list');
+    setProgress(formSelectors.connectButton, true);
+    let selectedProvider = getSelectedOption(domActionsSelectors.providerList);
     let api;
     let providerName = "";
     try {
-        if (selectedProvider.id === 'other-endpoint-value') {
-            providerName = getHTMLInputValue('other-endpoint-url') || "";
+        if (selectedProvider.id === domActionsSelectors.otherEndpointSelection) {
+            providerName = getHTMLInputValue(domActionsSelectors.otherEndpointURL) || "";
             api = await getApi(providerName);
         } else {
             providerName = selectedProvider.getAttribute("name") || "";
@@ -151,16 +163,17 @@ async function connect(event: Event) {
         }
         await updateConnectionStatus(api);
         await loadAccounts();
-        (document.getElementById("setupExtrinsic") as HTMLElement).setAttribute("class", "ready");
-        setProgress("connect-button", true);
+        (document.getElementById("setup-extrinsic") as HTMLElement).setAttribute("class", "ready");
+        setProgress(formSelectors.connectButton, true);
         showConnectedElements();
         resetForms()
         listenForExtrinsicsChange();
         registerExtrinsicsButtonHandlers();
-    } catch {
+    } catch(e: any) {
+        console.error(e.toString());
         alert(`could not connect to ${providerName || "empty value"}. Please enter a valid and reachable Websocket URL.`);
     } finally {
-        setProgress("connect-button", false);
+        setProgress(formSelectors.connectButton, false);
     }
     return;
 }
@@ -180,6 +193,32 @@ function populateDropdownWithAccounts(elementId: string) {
 
 }
 
+function loadTestAccounts() {
+    const keyring = new Keyring({type: 'sr25519'});
+
+    ['//Alice', '//Bob', '//Charlie', '//Dave', '//Eve', '//Ferdie'].forEach(accountName => {
+        let account = keyring.addFromUri(accountName);
+        account.meta.name = accountName;
+        validAccounts[account.address] = account;
+    })
+}
+
+async function loadExtensionAccounts() {
+    let allAccounts = await web3Accounts();
+    allAccounts.forEach(a => {
+        // display only the accounts allowed for this chain
+        if (!a.meta.genesisHash
+            || GENESIS_HASHES[providerName] === a.meta.genesisHash) {
+            validAccounts[a.address] = a;
+        }
+    });
+}
+
+async function anyPolkadotExtensions(): Promise<boolean> {
+    const extensions = await web3Enable('Frequency parachain signer helper');
+    return extensions.length > 0;
+}
+
 async function loadAccounts() {
     (document.getElementById("signing-address") as HTMLElement).innerHTML = "";
 
@@ -187,27 +226,13 @@ async function loadAccounts() {
     // access to the Alice/Bob/Charlie accounts etc., and so won't use the extension.
     validAccounts = {};
     if (providerName === "localhost") {
-        const keyring = new Keyring({ type: 'sr25519' });
-
-        ['//Alice', '//Bob', '//Charlie', '//Dave', '//Eve', '//Ferdie'].forEach(accountName => {
-            let account = keyring.addFromUri(accountName);
-            account.meta.name = accountName;
-            validAccounts[account.address] = account;
-        })
+        loadTestAccounts();
     } else {
-        const extensions = await web3Enable('Frequency parachain signer helper');
-        if (!extensions.length) {
+        if (!anyPolkadotExtensions()) {
             alert("Polkadot{.js} extension not found; please install it first.");
             return;
         }
-        let allAccounts = await web3Accounts();
-        allAccounts.forEach(a => {
-            // display only the accounts allowed for this chain
-            if (!a.meta.genesisHash
-                || GENESIS_HASHES[providerName] === a.meta.genesisHash) {
-                validAccounts[a.address] = a;
-            }
-        });
+        await loadExtensionAccounts();
     }
 
     // set options in the account dropdown.
@@ -223,10 +248,11 @@ async function loadAccounts() {
     ].forEach(selectId => populateDropdownWithAccounts(selectId))
 }
 
+// TODO: move this into domActions
 // resetForms puts the form state back to initial setup with first extrinsic selected and first form showing
 function resetForms() {
-    setVisibility("handles_claim_handle", true);
-    const selectedExtrinsic: HTMLOptionElement = getSelectedOption("extrinsics");
+    setVisibility(formSelectors.claimHandleForm, true);
+    const selectedExtrinsic: HTMLOptionElement = getSelectedOption(domActionsSelectors.extrinsicsListId);
 
     const toBeCleared  = document.getElementsByClassName('clear_on_reset') as HTMLCollectionOf<HTMLInputElement>;
     for (let i=0; i<toBeCleared.length; i++) {
@@ -239,9 +265,9 @@ function resetForms() {
         const item = toBeCleared.item(i) as HTMLInputElement
         item.disabled = false;
     }
-    (document.getElementById('status') as HTMLElement).innerHTML="";
+    (document.getElementById(domActionsSelectors.connectionStatusId) as HTMLElement).innerHTML="";
 
-    if (selectedExtrinsic.value !== "handles_claim_handle") {
+    if (selectedExtrinsic.value !== formSelectors.claimHandleForm) {
         setVisibility(selectedExtrinsic.value, false);
         selectedExtrinsic.selected = false;
     }
@@ -264,9 +290,8 @@ async function createMsa(event: Event) {
 
 async function signClaimHandle(event: Event) {
     event.preventDefault();
-    const formId = 'handles_claim_handle';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.claimHandleForm)) { return; }
+    clearFormInvalid(formSelectors.claimHandleForm);
 
     const { signingKey, payload} = getClaimHandleFormData(singletonApi);
     const signingAccount = validAccounts[signingKey];
@@ -285,9 +310,8 @@ async function signClaimHandle(event: Event) {
 
 async function submitClaimHandle(event: Event) {
     event.preventDefault();
-    const formId = 'handles_claim_handle';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.claimHandleForm)) { return; }
+    clearFormInvalid(formSelectors.claimHandleForm);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -308,9 +332,8 @@ async function submitClaimHandle(event: Event) {
 // TODO: populate new MSA Owner key with a dropdown from available accounts
 async function signAddPublicKeyToMsa(event: Event) {
     event.preventDefault();
-    const formId = 'msa_add_public_key_to_msa';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.addPublicKeyForm)) { return; }
+    clearFormInvalid(formSelectors.addPublicKeyForm);
 
     const { signingKey, delegatorKey, payload} = getAddPublicKeyFormData(singletonApi);
 
@@ -335,9 +358,8 @@ async function signAddPublicKeyToMsa(event: Event) {
 async function submitAddPublicKeyToMsa(event: Event) {
     event.preventDefault();
 
-    const formId = 'msa_add_public_key_to_msa';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.addPublicKeyForm)) { return; }
+    clearFormInvalid(formSelectors.addPublicKeyForm);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -358,9 +380,8 @@ async function submitAddPublicKeyToMsa(event: Event) {
 
 async function signCreateSponsoredAccountWithDelegation(event: Event) {
     event.preventDefault();
-    const formId = 'msa_create_sponsored_account_with_delegation';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.createMsaWithDelegationForm)) { return; }
+    clearFormInvalid(formSelectors.createMsaWithDelegationForm);
 
     const delegatorKey = getHTMLInputValue('create_sponsored_account_with_delegation_delegator_key');
     const delegatorAccount = validAccounts[delegatorKey];
@@ -385,9 +406,8 @@ async function signCreateSponsoredAccountWithDelegation(event: Event) {
 async function submitCreateSponsoredAccountWithDelegation(event: Event) {
     event.preventDefault();
 
-    const formId = 'msa_create_sponsored_account_with_delegation';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.createMsaWithDelegationForm)) { return; }
+    clearFormInvalid(formSelectors.createMsaWithDelegationForm);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -406,9 +426,8 @@ async function submitCreateSponsoredAccountWithDelegation(event: Event) {
 
 async function signGrantDelegation(event: Event) {
     event.preventDefault()
-    const formId = 'msa_grant_delegation';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.grantDelegation)) { return; }
+    clearFormInvalid(formSelectors.grantDelegation);
 
     const {delegatorKey, payload} = getGrantDelegationFormData(singletonApi);
     const delegatorAccount = validAccounts[delegatorKey];
@@ -423,9 +442,8 @@ async function signGrantDelegation(event: Event) {
 
 async function submitGrantDelegation(event: Event) {
     event.preventDefault();
-    const formId = 'msa_grant_delegation';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.grantDelegation)) { return; }
+    clearFormInvalid(formSelectors.grantDelegation);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -445,9 +463,9 @@ async function submitGrantDelegation(event: Event) {
 
 async function signApplyItemActionsWithSignature(event: Event) {
     event.preventDefault();
-    const formId = 'stateful_storage_apply_item_actions_with_signature';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.applyItemActionsForm)) { return; }
+    clearFormInvalid(formSelectors.applyItemActionsForm);
+
     const {delegatorKey, payload} = await getApplyItemActionsWithSignatureFormData(singletonApi);
     const delegatorAccount = validAccounts[delegatorKey];
 
@@ -461,9 +479,8 @@ async function signApplyItemActionsWithSignature(event: Event) {
 
 async function submitApplyItemActionsWithSignature(event: Event) {
     event.preventDefault();
-    const formId = 'stateful_storage_apply_item_actions_with_signature';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.applyItemActionsForm)) { return; }
+    clearFormInvalid(formSelectors.applyItemActionsForm);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -485,9 +502,8 @@ async function submitApplyItemActionsWithSignature(event: Event) {
 
 async function signUpsertPageWithSignature(event: Event) {
     event.preventDefault();
-    const formId = 'stateful_storage_upsert_page_with_signature';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.upsertPageForm)) { return; }
+    clearFormInvalid(formSelectors.upsertPageForm);
 
     const {delegatorKey, payload} = await getUpsertPageFormData(singletonApi);
     const delegatorAccount = validAccounts[delegatorKey];
@@ -501,9 +517,8 @@ async function signUpsertPageWithSignature(event: Event) {
 }
 async function submitUpsertPageWithSignature(event: Event) {
     event.preventDefault();
-    const formId = 'stateful_storage_upsert_page_with_signature';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.upsertPageForm)) { return; }
+    clearFormInvalid(formSelectors.upsertPageForm);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -522,7 +537,7 @@ async function submitUpsertPageWithSignature(event: Event) {
 
 async function signDeletePageWithSignature(event: Event){
     event.preventDefault();
-    const formId = 'stateful_storage_delete_page_with_signature';
+    const formId = formSelectors.deletePageForm;
     if (!validateForm(formId)) { return; }
     clearFormInvalid(formId);
 
@@ -534,14 +549,13 @@ async function signDeletePageWithSignature(event: Event){
         signPayloadWithKeyring(delegatorAccount, payload) :
         await signPayloadWithExtension(delegatorAccount, delegatorKey, payload)
 
-    let signatureEl = document.getElementById('signed_payload') as HTMLTextAreaElement;
+    let signatureEl = document.getElementById(domActionsSelectors.signedPayload1Id) as HTMLTextAreaElement;
     signatureEl.value = signature;
 }
 async function submitDeletePageWithSignature(event: Event){
     event.preventDefault();
-    const formId = 'stateful_storage_delete_page_with_signature';
-    if (!validateForm(formId)) { return; }
-    clearFormInvalid(formId);
+    if (!validateForm(formSelectors.deletePageForm)) { return; }
+    clearFormInvalid(formSelectors.deletePageForm);
 
     let submitButtonId = (event.target as HTMLElement).id
     setProgress(submitButtonId, true);
@@ -559,9 +573,8 @@ async function submitDeletePageWithSignature(event: Event){
 
 
 function init() {
-    onProviderEndpointChanged(undefined);
-    (document.getElementById('provider-list') as HTMLElement).addEventListener("change", onProviderEndpointChanged);
-    (document.getElementById("connect-button") as HTMLElement).addEventListener("click", connect);
+    callAndRegisterProviderChangeEvent();
+    (document.getElementById(formSelectors.connectButton) as HTMLElement).addEventListener("click", connect);
 }
 
 init();

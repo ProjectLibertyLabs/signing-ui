@@ -1,5 +1,21 @@
 // For functions that act only on the DOM and don't need any external imports
 let registeredEvents = {};
+export const domActionsSelectors = {
+    spinnerId: "txProcessing",
+    spinnerContainerId: "txProcessingContainer",
+    connectionStatusId: "connection-status",
+    isProcessingId: "isProcessing",
+    requiredFormMissingClass: "invalid",
+    hiddenClass: "hidden",
+    extrinsicsListId: "extrinsics",
+    signedPayload1Id: "signed_payload",
+    signedPayload2Id: "signed_payload2",
+    extrinsicStatusId: "extrinsic-status",
+    otherEndpointSelection: "other-endpoint-value",
+    otherEndpointFieldset: "other-endpoint",
+    otherEndpointURL: "other-endpoint-url",
+    providerList: "provider-list",
+};
 // Simple loading and button blocker
 export function setProgress(id, isInProgress) {
     const spinner = document.getElementById("txProcessing");
@@ -21,10 +37,10 @@ export function setVisibility(id, isVisible) {
     let el = document.getElementById(id);
     if (el) {
         if (isVisible) {
-            el.classList.remove('hidden');
+            el.classList.remove(domActionsSelectors.hiddenClass);
         }
         else {
-            !el.classList.contains('hidden') && el.classList.add('hidden');
+            !el.classList.contains(domActionsSelectors.hiddenClass) && el.classList.add('hidden');
         }
     }
 }
@@ -48,9 +64,9 @@ export function showExtrinsicForm(event) {
 export function listenForExtrinsicsChange() {
     // If people are playing around and switching providers, don't keep registering the listener.
     if (!`registeredEvents`["extrinsics"]) {
-        let extrinsicsEl = document.getElementById("extrinsics");
+        let extrinsicsEl = document.getElementById(domActionsSelectors.extrinsicsListId);
         extrinsicsEl.addEventListener("change", showExtrinsicForm);
-        let signedPayloadEl = document.getElementById('signed_payload');
+        let signedPayloadEl = document.getElementById(domActionsSelectors.signedPayload1Id);
         signedPayloadEl.value = '';
         registeredEvents["extrinsics"] = true;
     }
@@ -65,8 +81,8 @@ export function getHTMLInputValue(elementId) {
     return document.getElementById(elementId).value;
 }
 export function clearSignedPayloads() {
-    document.getElementById('signed_payload').value = '';
-    document.getElementById('signed_payload2').value = '';
+    document.getElementById(domActionsSelectors.signedPayload1Id).value = '';
+    document.getElementById(domActionsSelectors.signedPayload2Id).value = '';
 }
 export function validateForm(formId) {
     let form = document.getElementById(formId);
@@ -75,8 +91,11 @@ export function validateForm(formId) {
     for (let i = 0; i < inputs.length; i++) {
         let input = inputs[i];
         if (input.required && input.value === '') {
-            input.setAttribute('class', 'invalid');
+            input.classList.add(domActionsSelectors.requiredFormMissingClass);
             formValid = false;
+        }
+        else {
+            input.classList.remove(domActionsSelectors.requiredFormMissingClass);
         }
     }
     if (!formValid) {
@@ -88,15 +107,20 @@ export function clearFormInvalid(formId) {
     let form = document.getElementById(formId);
     let inputs = form.getElementsByTagName('input');
     for (let i = 0; i < inputs.length; i++) {
-        inputs[i].setAttribute('class', '');
+        inputs.item(i)?.classList.remove(domActionsSelectors.requiredFormMissingClass);
     }
 }
 export function showExtrinsicStatus(status) {
     let newEl = document.createElement("p");
     newEl.innerText = status;
-    document.getElementById('extrinsic-status').appendChild(newEl);
+    document.getElementById(domActionsSelectors.extrinsicStatusId).appendChild(newEl);
 }
 export function onProviderEndpointChanged(_event) {
-    let selectEl = document.getElementById('provider-list');
-    setVisibility('other-endpoint', !!selectEl.selectedOptions.namedItem('other-endpoint-value'));
+    let selectEl = document.getElementById(domActionsSelectors.providerList);
+    let otherIsSelected = selectEl.selectedOptions.namedItem(domActionsSelectors.otherEndpointSelection);
+    setVisibility(domActionsSelectors.otherEndpointFieldset, !!otherIsSelected);
+}
+export function callAndRegisterProviderChangeEvent() {
+    onProviderEndpointChanged(null);
+    document.getElementById(domActionsSelectors.providerList).addEventListener("change", onProviderEndpointChanged);
 }

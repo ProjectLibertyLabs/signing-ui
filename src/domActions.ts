@@ -8,12 +8,13 @@ export const domActionsSelectors = {
     isProcessingId: "isProcessing",
     requiredFormMissingClass: "invalid",
     hiddenClass: "hidden",
-    extrinsicsListId: "extrinsic",
+    extrinsicsListId: "extrinsics",
     signedPayload1Id: "signed_payload",
     signedPayload2Id: "signed_payload2",
     extrinsicStatusId: "extrinsic-status",
     otherEndpointSelection: "other-endpoint-value",
     otherEndpointFieldset: "other-endpoint",
+    otherEndpointURL: "other-endpoint-url",
     providerList: "provider-list",
 }
 // Simple loading and button blocker
@@ -124,4 +125,10 @@ export function onProviderEndpointChanged(_event: unknown) {
     let selectEl = document.getElementById(domActionsSelectors.providerList) as HTMLSelectElement;
     let otherIsSelected = selectEl.selectedOptions.namedItem(domActionsSelectors.otherEndpointSelection)
     setVisibility(domActionsSelectors.otherEndpointFieldset, !!otherIsSelected);
+}
+
+export function callAndRegisterProviderChangeEvent() {
+    onProviderEndpointChanged(null);
+    (document.getElementById(domActionsSelectors.providerList) as HTMLElement).addEventListener("change", onProviderEndpointChanged);
+
 }
