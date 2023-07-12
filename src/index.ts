@@ -21,6 +21,7 @@ import {
     validateForm,
     setProgress,
     callAndRegisterProviderChangeEvent,
+    setConnectionProgress,
 } from "./domActions.js";
 
 import {
@@ -77,7 +78,6 @@ let formListeners: Record<string, EventHandler> = {
 };
 
 const formSelectors = {
-    connectButton: "connect-button",
     deletePageForm: 'stateful_storage_delete_page_with_signature',
     upsertPageForm: 'stateful_storage_upsert_page_with_signature',
     applyItemActionsForm: 'stateful_storage_apply_item_actions_with_signature',
@@ -109,10 +109,9 @@ async function getApi(providerUri: string) {
     singletonProvider = new WsProvider(providerUri);
     singletonApi = await ApiPromise.create({
         provider: singletonProvider,
+        throwOnConnect: true,
         ...options,
     });
-
-    await singletonApi.isReady;
     return singletonApi;
 }
 
@@ -143,37 +142,37 @@ async function updateConnectionStatus(api) {
     (document.getElementById("unit") as HTMLElement).innerText = UNIT;
     let blockNumber = await getBlockNumber(singletonApi);
     (document.getElementById("current-block") as HTMLElement).innerHTML = blockNumber.toString();
-    (document.getElementById('connection-status') as HTMLElement).innerText = "Connected"
+    (document.getElementById(domActionsSelectors.connectionStatus) as HTMLElement).innerText = "Connected"
 }
 
 // Connect to the wallet and blockchain
 async function connect(event: Event) {
     event.preventDefault();
-    setProgress(formSelectors.connectButton, true);
+    setConnectionProgress(domActionsSelectors.connectButton, true);
     let selectedProvider = getSelectedOption(domActionsSelectors.providerList);
     let api;
-    let providerName = "";
+    let provider = "";
     try {
         if (selectedProvider.id === domActionsSelectors.otherEndpointSelection) {
             providerName = getHTMLInputValue(domActionsSelectors.otherEndpointURL) || "";
-            api = await getApi(providerName);
+            provider = providerName;
         } else {
             providerName = selectedProvider.getAttribute("name") || "";
-            api = await getApi(selectedProvider.value);
+            provider = selectedProvider.value;
         }
+        api = await getApi(provider);
         await updateConnectionStatus(api);
         await loadAccounts();
         (document.getElementById("setup-extrinsic") as HTMLElement).setAttribute("class", "ready");
-        setProgress(formSelectors.connectButton, true);
         showConnectedElements();
         resetForms()
         listenForExtrinsicsChange();
         registerExtrinsicsButtonHandlers();
     } catch(e: any) {
         console.error(e.toString());
-        alert(`could not connect to ${providerName || "empty value"}. Please enter a valid and reachable Websocket URL.`);
+        alert(`could not connect to ${provider || "empty value"}. Please enter a valid and reachable Websocket URL.`);
     } finally {
-        setProgress(formSelectors.connectButton, false);
+        setConnectionProgress(domActionsSelectors.connectButton, false);
     }
     return;
 }
@@ -265,7 +264,7 @@ function resetForms() {
         const item = toBeCleared.item(i) as HTMLInputElement
         item.disabled = false;
     }
-    (document.getElementById(domActionsSelectors.connectionStatusId) as HTMLElement).innerHTML="";
+    (document.getElementById(domActionsSelectors.connectionStatus) as HTMLElement).innerHTML="";
 
     if (selectedExtrinsic.value !== formSelectors.claimHandleForm) {
         setVisibility(selectedExtrinsic.value, false);
@@ -574,7 +573,7 @@ async function submitDeletePageWithSignature(event: Event){
 
 function init() {
     callAndRegisterProviderChangeEvent();
-    (document.getElementById(formSelectors.connectButton) as HTMLElement).addEventListener("click", connect);
+    (document.getElementById(domActionsSelectors.connectButton) as HTMLElement).addEventListener("click", connect);
 }
 
 init();

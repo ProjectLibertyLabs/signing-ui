@@ -2,16 +2,17 @@
 let registeredEvents: Record<string, any> = {};
 
 export const domActionsSelectors = {
-    spinnerId: "txProcessing",
-    spinnerContainerId: "txProcessingContainer",
-    connectionStatusId: "connection-status",
-    isProcessingId: "isProcessing",
-    requiredFormMissingClass: "invalid",
+    connectButton: "connect-button",
+    spinner: "txProcessing",
+    spinnerContainer: "txProcessingContainer",
+    connectionStatus: "connection-status",
+    isProcessing: "isProcessing",
+    requiredFormMissing: "invalid",
     hiddenClass: "hidden",
     extrinsicsListId: "extrinsics",
     signedPayload1Id: "signed_payload",
     signedPayload2Id: "signed_payload2",
-    extrinsicStatusId: "extrinsic-status",
+    extrinsicStatus: "extrinsic-status",
     otherEndpointSelection: "other-endpoint-value",
     otherEndpointFieldset: "other-endpoint",
     otherEndpointURL: "other-endpoint-url",
@@ -23,7 +24,7 @@ export function setProgress(id: string, isInProgress: boolean) {
     const submitButton = document.getElementById(id) as HTMLButtonElement;
     const spinnerContainer = document.getElementById('txProcessingContainer') as HTMLElement;
     if (isInProgress) {
-        (document.getElementById('connection-status') as HTMLElement).innerText = "";
+        (document.getElementById(domActionsSelectors.extrinsicStatus) as HTMLElement).innerText = "";
         submitButton.disabled = true;
         spinner.style.display = "block";
         spinnerContainer.setAttribute("class", "isProcessing");
@@ -33,6 +34,12 @@ export function setProgress(id: string, isInProgress: boolean) {
         spinnerContainer.setAttribute("class", "");
     }
 }
+
+export function setConnectionProgress(id: string, isInProgress: boolean) {
+    const submitButton = document.getElementById(id) as HTMLButtonElement;
+    submitButton.disabled = isInProgress;
+}
+
 export function setVisibility(id: string, isVisible: boolean) {
     let el = document.getElementById(id);
     if (el) {
@@ -95,10 +102,10 @@ export function validateForm(formId: string): boolean {
     for (let i = 0; i < inputs.length; i++) {
         let input = inputs[i] as HTMLInputElement;
         if (input.required && input.value === '') {
-            input.classList.add(domActionsSelectors.requiredFormMissingClass);
+            input.classList.add(domActionsSelectors.requiredFormMissing);
             formValid = false;
         } else {
-            input.classList.remove(domActionsSelectors.requiredFormMissingClass)
+            input.classList.remove(domActionsSelectors.requiredFormMissing)
         }
     }
     if (!formValid) {
@@ -111,14 +118,14 @@ export function clearFormInvalid(formId: string) {
     let form = document.getElementById(formId) as HTMLFormElement
     let inputs = form.getElementsByTagName('input');
     for (let i = 0; i < inputs.length; i++) {
-        inputs.item(i)?.classList.remove(domActionsSelectors.requiredFormMissingClass);
+        inputs.item(i)?.classList.remove(domActionsSelectors.requiredFormMissing);
     }
 }
 
 export function showExtrinsicStatus(status: string) {
     let newEl = document.createElement("p");
     newEl.innerText = status;
-    (document.getElementById(domActionsSelectors.extrinsicStatusId) as HTMLElement).appendChild(newEl);
+    (document.getElementById(domActionsSelectors.extrinsicStatus) as HTMLElement).appendChild(newEl);
 }
 
 export function onProviderEndpointChanged(_event: unknown) {

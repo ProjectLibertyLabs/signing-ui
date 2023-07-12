@@ -1,16 +1,17 @@
 // For functions that act only on the DOM and don't need any external imports
 let registeredEvents = {};
 export const domActionsSelectors = {
-    spinnerId: "txProcessing",
-    spinnerContainerId: "txProcessingContainer",
-    connectionStatusId: "connection-status",
-    isProcessingId: "isProcessing",
-    requiredFormMissingClass: "invalid",
+    connectButton: "connect-button",
+    spinner: "txProcessing",
+    spinnerContainer: "txProcessingContainer",
+    connectionStatus: "connection-status",
+    isProcessing: "isProcessing",
+    requiredFormMissing: "invalid",
     hiddenClass: "hidden",
     extrinsicsListId: "extrinsics",
     signedPayload1Id: "signed_payload",
     signedPayload2Id: "signed_payload2",
-    extrinsicStatusId: "extrinsic-status",
+    extrinsicStatus: "extrinsic-status",
     otherEndpointSelection: "other-endpoint-value",
     otherEndpointFieldset: "other-endpoint",
     otherEndpointURL: "other-endpoint-url",
@@ -22,7 +23,7 @@ export function setProgress(id, isInProgress) {
     const submitButton = document.getElementById(id);
     const spinnerContainer = document.getElementById('txProcessingContainer');
     if (isInProgress) {
-        document.getElementById('connection-status').innerText = "";
+        document.getElementById(domActionsSelectors.extrinsicStatus).innerText = "";
         submitButton.disabled = true;
         spinner.style.display = "block";
         spinnerContainer.setAttribute("class", "isProcessing");
@@ -32,6 +33,10 @@ export function setProgress(id, isInProgress) {
         spinner.style.display = "none";
         spinnerContainer.setAttribute("class", "");
     }
+}
+export function setConnectionProgress(id, isInProgress) {
+    const submitButton = document.getElementById(id);
+    submitButton.disabled = isInProgress;
 }
 export function setVisibility(id, isVisible) {
     let el = document.getElementById(id);
@@ -91,11 +96,11 @@ export function validateForm(formId) {
     for (let i = 0; i < inputs.length; i++) {
         let input = inputs[i];
         if (input.required && input.value === '') {
-            input.classList.add(domActionsSelectors.requiredFormMissingClass);
+            input.classList.add(domActionsSelectors.requiredFormMissing);
             formValid = false;
         }
         else {
-            input.classList.remove(domActionsSelectors.requiredFormMissingClass);
+            input.classList.remove(domActionsSelectors.requiredFormMissing);
         }
     }
     if (!formValid) {
@@ -107,13 +112,13 @@ export function clearFormInvalid(formId) {
     let form = document.getElementById(formId);
     let inputs = form.getElementsByTagName('input');
     for (let i = 0; i < inputs.length; i++) {
-        inputs.item(i)?.classList.remove(domActionsSelectors.requiredFormMissingClass);
+        inputs.item(i)?.classList.remove(domActionsSelectors.requiredFormMissing);
     }
 }
 export function showExtrinsicStatus(status) {
     let newEl = document.createElement("p");
     newEl.innerText = status;
-    document.getElementById(domActionsSelectors.extrinsicStatusId).appendChild(newEl);
+    document.getElementById(domActionsSelectors.extrinsicStatus).appendChild(newEl);
 }
 export function onProviderEndpointChanged(_event) {
     let selectEl = document.getElementById(domActionsSelectors.providerList);

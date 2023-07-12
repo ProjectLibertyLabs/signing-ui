@@ -6,7 +6,7 @@ import { web3Accounts, web3Enable } from 'https://cdn.jsdelivr.net/npm/@polkadot
 import { Keyring } from 'https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm';
 // @ts-ignore
 import { options } from "https://cdn.jsdelivr.net/npm/@frequency-chain/api-augment@1.6.1/+esm";
-import { domActionsSelectors, clearFormInvalid, getHTMLInputValue, getSelectedOption, listenForExtrinsicsChange, setVisibility, validateForm, setProgress, callAndRegisterProviderChangeEvent, } from "./domActions.js";
+import { domActionsSelectors, clearFormInvalid, getHTMLInputValue, getSelectedOption, listenForExtrinsicsChange, setVisibility, validateForm, setProgress, callAndRegisterProviderChangeEvent, setConnectionProgress, } from "./domActions.js";
 import { getCreateSponsoredAccountFormData, getGrantDelegationFormData, getApplyItemActionsWithSignatureFormData, getAddPublicKeyFormData, getClaimHandleFormData, getUpsertPageFormData, getDeletePageWithSignatureFormData, } from "./formApiActions.js";
 import { getBlockNumber, signPayloadWithExtension, signPayloadWithKeyring, submitExtrinsicWithExtension, submitExtrinsicWithKeyring, } from "./chainActions.js";
 // const Hash = interfaces.Hash;
@@ -36,7 +36,6 @@ let formListeners = {
     'delete_page_with_signature_submit_button': submitDeletePageWithSignature,
 };
 const formSelectors = {
-    connectButton: "connect-button",
     deletePageForm: 'stateful_storage_delete_page_with_signature',
     upsertPageForm: 'stateful_storage_upsert_page_with_signature',
     applyItemActionsForm: 'stateful_storage_apply_item_actions_with_signature',
@@ -66,9 +65,9 @@ async function getApi(providerUri) {
     singletonProvider = new WsProvider(providerUri);
     singletonApi = await ApiPromise.create({
         provider: singletonProvider,
+        throwOnConnect: true,
         ...options,
     });
-    await singletonApi.isReady;
     return singletonApi;
 }
 function registerExtrinsicsButtonHandlers() {
@@ -96,28 +95,28 @@ async function updateConnectionStatus(api) {
     document.getElementById("unit").innerText = UNIT;
     let blockNumber = await getBlockNumber(singletonApi);
     document.getElementById("current-block").innerHTML = blockNumber.toString();
-    document.getElementById('connection-status').innerText = "Connected";
+    document.getElementById(domActionsSelectors.connectionStatus).innerText = "Connected";
 }
 // Connect to the wallet and blockchain
 async function connect(event) {
     event.preventDefault();
-    setProgress(formSelectors.connectButton, true);
+    setConnectionProgress(domActionsSelectors.connectButton, true);
     let selectedProvider = getSelectedOption(domActionsSelectors.providerList);
     let api;
-    let providerName = "";
+    let provider = "";
     try {
         if (selectedProvider.id === domActionsSelectors.otherEndpointSelection) {
             providerName = getHTMLInputValue(domActionsSelectors.otherEndpointURL) || "";
-            api = await getApi(providerName);
+            provider = providerName;
         }
         else {
             providerName = selectedProvider.getAttribute("name") || "";
-            api = await getApi(selectedProvider.value);
+            provider = selectedProvider.value;
         }
+        api = await getApi(provider);
         await updateConnectionStatus(api);
         await loadAccounts();
         document.getElementById("setup-extrinsic").setAttribute("class", "ready");
-        setProgress(formSelectors.connectButton, true);
         showConnectedElements();
         resetForms();
         listenForExtrinsicsChange();
@@ -125,10 +124,10 @@ async function connect(event) {
     }
     catch (e) {
         console.error(e.toString());
-        alert(`could not connect to ${providerName || "empty value"}. Please enter a valid and reachable Websocket URL.`);
+        alert(`could not connect to ${provider || "empty value"}. Please enter a valid and reachable Websocket URL.`);
     }
     finally {
-        setProgress(formSelectors.connectButton, false);
+        setConnectionProgress(domActionsSelectors.connectButton, false);
     }
     return;
 }
@@ -208,7 +207,7 @@ function resetForms() {
         const item = toBeCleared.item(i);
         item.disabled = false;
     }
-    document.getElementById(domActionsSelectors.connectionStatusId).innerHTML = "";
+    document.getElementById(domActionsSelectors.connectionStatus).innerHTML = "";
     if (selectedExtrinsic.value !== formSelectors.claimHandleForm) {
         setVisibility(selectedExtrinsic.value, false);
         selectedExtrinsic.selected = false;
@@ -465,6 +464,6 @@ async function submitDeletePageWithSignature(event) {
 }
 function init() {
     callAndRegisterProviderChangeEvent();
-    document.getElementById(formSelectors.connectButton).addEventListener("click", connect);
+    document.getElementById(domActionsSelectors.connectButton).addEventListener("click", connect);
 }
 init();
