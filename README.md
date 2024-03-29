@@ -4,9 +4,9 @@ A UI to demonstrate and help with testing extrinsics that send signed payloads t
 
 ### Features
 
-- Connect to local chain or Frequency Rococo.
-- When connected to Frequency Rococo, automatically populates any needed signers with keys pulled from Polkadot extension
-- When connected to Frequency localhost, populates the needed signers with Alice through Ferdie test accounts.
+- Connect to local or Testnet Frequency Node.
+- When connected to Testnet Frequency Node, automatically populates any needed signers with keys pulled from Polkadot extension
+- When connected to Frequency on localhost, populates the needed signers with Alice through Ferdie test accounts.
 - Generate and display required payload signatures, given inputs
 - Submit the extrinsic with the generated signature and provided inputs to the chosen chain
 - Extrinsics:

@@ -24,7 +24,8 @@ test("showExtrinsicStatus works", () => {
 
 test("onProviderEndpointChanged", () => {
   document.body.innerHTML = `<select id=${domActionsSelectors.providerList} required>
-            <option value="wss://rpc.rococo.frequency.xyz" name="rococo">Rococo</option>
+            <option value="wss://0.rpc.testnet.amplica.io" name="frequency_paseo">Frequency Testnet Paseo</option>
+            <option value="wss://rpc.rococo.frequency.xyz" name="frequency_rococo">Frequency Testnet Rococo</option>
             <option value="ws://localhost:9944" name="localhost">Localhost</option>
             <option id=${domActionsSelectors.otherEndpointSelection}>Other endpoint</option>
         </select>
@@ -35,11 +36,11 @@ test("onProviderEndpointChanged", () => {
         </fieldset>`;
 
   let providerSelect = document.getElementById(domActionsSelectors.providerList) as HTMLSelectElement;
-  providerSelect.namedItem("rococo").selected = true;
+  providerSelect.namedItem("frequency_paseo").selected = true;
   onProviderEndpointChanged(null);
   let otherEl = document.getElementById(domActionsSelectors.otherEndpointFieldset);
   expect(otherEl).toHaveClass("hidden");
-  providerSelect.namedItem("rococo").selected = false;
+  providerSelect.namedItem("frequency_paseo").selected = false;
   providerSelect.namedItem(domActionsSelectors.otherEndpointSelection).selected = true;
   onProviderEndpointChanged(null);
   expect(otherEl).not.toHaveClass("hidden");
