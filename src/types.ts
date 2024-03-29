@@ -3,15 +3,7 @@
 // https://www.npmjs.com/package/@frequency-chain/api-augment
 
 // @ts-ignore
-import {
-  Bytes,
-  Signer,
-  Sr25519Signature,
-  Struct,
-  u16,
-  u32,
-  u64,
-} from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm";
+import { Bytes, Struct, u16, u32, u64 } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.12.4/+esm";
 
 export interface MessageSourceId extends u64 {}
 

@@ -6,7 +6,7 @@ export async function waitFor(predicate, { interval = 500, timeout = 36000 } = {
     let elapsed = 0;
     while (!(await asyncPredicate())) {
         if (elapsed > timeout) {
-            throw Error('Timeout');
+            throw Error("Timeout");
         }
         await sleep(interval);
         elapsed += interval;

@@ -1,7 +1,3 @@
-// @ts-ignore
-import { SpRuntimeDispatchError, Struct, Vec } from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm";
-import { MessageSourceId, ItemizedStorageResponse, PaginatedStorageResponse, SchemaId } from "./types.js";
-
 const StatefulStorageRpc = {
   rpc: {
     getPaginatedStorage: {

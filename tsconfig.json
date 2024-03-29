@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
+    "target": "ES2022",
     "lib": ["dom", "ESNext"],
     "outDir": "./built",
-    "module": "ES2022",
+    "module": "nodenext",
     "allowJs": false,
     "strict": true,
     "noImplicitAny": false,

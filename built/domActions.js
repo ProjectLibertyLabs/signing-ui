@@ -21,7 +21,7 @@ export const domActionsSelectors = {
 export function setProgress(id, isInProgress) {
     const spinner = document.getElementById("txProcessing");
     const submitButton = document.getElementById(id);
-    const spinnerContainer = document.getElementById('txProcessingContainer');
+    const spinnerContainer = document.getElementById("txProcessingContainer");
     if (isInProgress) {
         document.getElementById(domActionsSelectors.extrinsicStatus).innerText = "";
         submitButton.disabled = true;
@@ -45,7 +45,7 @@ export function setVisibility(id, isVisible) {
             el.classList.remove(domActionsSelectors.hiddenClass);
         }
         else {
-            !el.classList.contains(domActionsSelectors.hiddenClass) && el.classList.add('hidden');
+            !el.classList.contains(domActionsSelectors.hiddenClass) && el.classList.add("hidden");
         }
     }
 }
@@ -72,7 +72,7 @@ export function listenForExtrinsicsChange() {
         let extrinsicsEl = document.getElementById(domActionsSelectors.extrinsicsListId);
         extrinsicsEl.addEventListener("change", showExtrinsicForm);
         let signedPayloadEl = document.getElementById(domActionsSelectors.signedPayload1Id);
-        signedPayloadEl.value = '';
+        signedPayloadEl.value = "";
         registeredEvents["extrinsics"] = true;
     }
     return;
@@ -86,16 +86,16 @@ export function getHTMLInputValue(elementId) {
     return document.getElementById(elementId).value;
 }
 export function clearSignedPayloads() {
-    document.getElementById(domActionsSelectors.signedPayload1Id).value = '';
-    document.getElementById(domActionsSelectors.signedPayload2Id).value = '';
+    document.getElementById(domActionsSelectors.signedPayload1Id).value = "";
+    document.getElementById(domActionsSelectors.signedPayload2Id).value = "";
 }
 export function validateForm(formId) {
     let form = document.getElementById(formId);
-    let inputs = form.getElementsByTagName('input');
+    let inputs = form.getElementsByTagName("input");
     let formValid = true;
     for (let i = 0; i < inputs.length; i++) {
         let input = inputs[i];
-        if (input.required && input.value === '') {
+        if (input.required && input.value === "") {
             input.classList.add(domActionsSelectors.requiredFormMissing);
             formValid = false;
         }
@@ -110,7 +110,7 @@ export function validateForm(formId) {
 }
 export function clearFormInvalid(formId) {
     let form = document.getElementById(formId);
-    let inputs = form.getElementsByTagName('input');
+    let inputs = form.getElementsByTagName("input");
     for (let i = 0; i < inputs.length; i++) {
         inputs.item(i)?.classList.remove(domActionsSelectors.requiredFormMissing);
     }

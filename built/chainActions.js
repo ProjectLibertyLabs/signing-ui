@@ -1,9 +1,9 @@
 // @ts-ignore
-import { web3FromSource } from 'https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm';
+import { web3FromSource } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.9/+esm";
 // @ts-ignore
-import { u32 } from 'https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm';
+import { u32 } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.12.4/+esm";
 // @ts-ignore
-import { isFunction, u8aToHex, u8aWrapBytes } from 'https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm';
+import { isFunction, u8aToHex, u8aWrapBytes } from "https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/+esm";
 import { waitFor } from "./util.js";
 import { showExtrinsicStatus } from "./domActions.js";
 export async function getBlockNumber(api) {
@@ -18,11 +18,11 @@ function parseChainEvent({ events = [], status }) {
     else if (status.isFinalized) {
         showExtrinsicStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
         events.forEach(({ event }) => {
-            if (event.method === 'ExtrinsicSuccess') {
-                showExtrinsicStatus('Transaction succeeded');
+            if (event.method === "ExtrinsicSuccess") {
+                showExtrinsicStatus("Transaction succeeded");
             }
-            else if (event.method === 'ExtrinsicFailed') {
-                showExtrinsicStatus('Transaction failed. See chain explorer for details.');
+            else if (event.method === "ExtrinsicFailed") {
+                showExtrinsicStatus("Transaction failed. See chain explorer for details.");
             }
         });
         return;
@@ -42,7 +42,7 @@ export async function submitExtrinsicWithExtension(extrinsic, signingAccount, si
     try {
         function sendStatusCb({ events = [], status }) {
             if (status.isInvalid) {
-                alert('Transaction is Invalid');
+                alert("Transaction is Invalid");
                 currentTxDone = true;
             }
             else if (status.isReady) {
@@ -57,11 +57,11 @@ export async function submitExtrinsicWithExtension(extrinsic, signingAccount, si
             else if (status.isFinalized) {
                 showExtrinsicStatus(`Transaction is finalized in blockhash ${status.asFinalized.toHex()}`);
                 events.forEach(({ event }) => {
-                    if (event.method === 'ExtrinsicSuccess') {
-                        showExtrinsicStatus('Transaction succeeded');
+                    if (event.method === "ExtrinsicSuccess") {
+                        showExtrinsicStatus("Transaction succeeded");
                     }
-                    else if (event.method === 'ExtrinsicFailed') {
-                        showExtrinsicStatus('Transaction failed. See chain explorer for details.');
+                    else if (event.method === "ExtrinsicFailed") {
+                        showExtrinsicStatus("Transaction failed. See chain explorer for details.");
                     }
                 });
                 currentTxDone = true;
@@ -100,7 +100,9 @@ export async function signPayloadWithExtension(signingAccount, signingKey, paylo
     if (signer && isFunction(signRaw)) {
         const payloadWrappedToU8a = wrapToU8a(payload);
         const signerPayloadRaw = {
-            address: signingAccount.address, data: payloadWrappedToU8a, type: 'bytes'
+            address: signingAccount.address,
+            data: payloadWrappedToU8a,
+            type: "bytes",
         };
         try {
             signed = await signRaw(signerPayloadRaw);

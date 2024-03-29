@@ -1,9 +1,9 @@
 // Functions that get form data and convert them into Polkadot API submittable payloads and signing keys
 
 // @ts-ignore
-import { ApiPromise } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm";
+import { ApiPromise } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.12.4/+esm";
 // @ts-ignore
-import { Bytes } from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm";
+import { Bytes } from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.12.4/+esm";
 import { getHTMLInputValue, getSelectedOption } from "./domActions.js";
 import { getCurrentItemizedHash, getCurrentPaginatedHash } from "./chainActions.js";
 

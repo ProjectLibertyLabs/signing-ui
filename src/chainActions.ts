@@ -1,29 +1,18 @@
 // @ts-ignore
-import { web3FromSource } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.2/+esm";
+import { web3FromSource } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.9/+esm";
 // @ts-ignore
-import { ApiPromise } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm";
+import { ApiPromise, u32 } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.12.4/+esm";
 /// this may not work
 // @ts-ignore
-import { SubmittableExtrinsic } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.5.1/+esm/promise/types";
+import { SubmittableExtrinsic } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.12.4/+esm/promise/types";
 // @ts-ignore
-import {
-  EventRecord,
-  ExtrinsicStatus,
-  Signer,
-  SignerResult,
-  SignerPayloadRaw,
-  Sr25519Signature,
-  u16,
-  u32,
-} from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.5.1/+esm";
+import { EventRecord, ExtrinsicStatus, SignerResult } from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.12.4/+esm";
 // @ts-ignore
-import { Keyring, KeyringPair } from "https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.1.2/+esm";
+import { KeyringPair } from "https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.6.2/+esm";
 // @ts-ignore
-import { isFunction, u8aToHex, u8aWrapBytes } from "https://cdn.jsdelivr.net/npm/@polkadot/util@12.1.2/+esm";
+import { isFunction, u8aToHex, u8aWrapBytes } from "https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/+esm";
 // @ts-ignore
-import { PageId, PaginatedStorageResponse } from "@frequency-chain/api-augment/interfaces";
-// @ts-ignore
-import { InjectedAccountWithMeta } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-inject@0.46.3/+esm";
+import { InjectedAccountWithMeta } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-inject@0.46.9/+esm";
 
 import { waitFor } from "./util.js";
 import { showExtrinsicStatus } from "./domActions.js";
