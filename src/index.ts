@@ -3,8 +3,6 @@ import { ApiPromise, WsProvider } from "https://cdn.jsdelivr.net/npm/@polkadot/a
 // @ts-ignore
 import { web3Accounts, web3Enable } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.9/+esm";
 // @ts-ignore
-import { Bytes, Signer, Sr25519Signature, u16, u64 } from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.12.4/+esm";
-// @ts-ignore
 import { Keyring, KeyringPair } from "https://cdn.jsdelivr.net/npm/@polkadot/keyring@12.6.2/+esm";
 // @ts-ignore
 import { InjectedAccountWithMeta } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-inject@0.46.9/+esm";

@@ -1,7 +1,7 @@
 // @ts-ignore
 import { web3FromSource } from "https://cdn.jsdelivr.net/npm/@polkadot/extension-dapp@0.46.9/+esm";
 // @ts-ignore
-import { u32 } from "https://cdn.jsdelivr.net/npm/@polkadot/api@10.12.4/+esm";
+import { u32 } from "https://cdn.jsdelivr.net/npm/@polkadot/types@10.12.4/+esm";
 // @ts-ignore
 import { isFunction, u8aToHex, u8aWrapBytes } from "https://cdn.jsdelivr.net/npm/@polkadot/util@12.6.2/+esm";
 import { waitFor } from "./util.js";
