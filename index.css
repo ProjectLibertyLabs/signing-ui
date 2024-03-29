@@ -1,57 +1,66 @@
 .hidden {
-    display: none;
+  display: none;
 }
 .ready {
-    display: block;
+  display: block;
 }
 .container {
-    display: flex;
-    align-items: stretch;
+  display: flex;
+  align-items: stretch;
 }
 .container div {
-    flex-grow: 1;
+  flex-grow: 1;
 }
 #payload #payload_signatures textarea {
-    height: 100px;
+  height: 100px;
 }
 .invalid {
-    border-color: red;
-    border-width: 2px;
+  border-color: red;
+  border-width: 2px;
 }
 
 /* Spinner */
-.loader, .isProcessing {
-    --color-accent: #00ccbb;
-    --color-link: #11facc;
-    --color-bg-secondary: #99ffee;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background-color: var(--color-accent);
-    box-shadow: 32px 0 var(--color-accent), -32px 0 var(--color-accent);
-    position: relative;
-    animation: flash 1s ease-out infinite alternate;
-    margin-left: 90px;
+.loader,
+.isProcessing {
+  --color-accent: #00ccbb;
+  --color-link: #11facc;
+  --color-bg-secondary: #99ffee;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  box-shadow:
+    32px 0 var(--color-accent),
+    -32px 0 var(--color-accent);
+  position: relative;
+  animation: flash 1s ease-out infinite alternate;
+  margin-left: 90px;
 }
 #txProcessingContainer {
-    display: block;
-    padding: 22px;
-    border: 1px solid var(--color-bg-secondary);
-    border-radius: 0 2px;
+  display: block;
+  padding: 22px;
+  border: 1px solid var(--color-bg-secondary);
+  border-radius: 0 2px;
 }
 @keyframes flash {
-    0% {
-        background-color: var(--color-link);
-        box-shadow: 32px 0 var(--color-link), -32px 0 var(--color-accent);
-    }
+  0% {
+    background-color: var(--color-link);
+    box-shadow:
+      32px 0 var(--color-link),
+      -32px 0 var(--color-accent);
+  }
 
-    50% {
-        background-color: var(--color-accent);
-        box-shadow: 32px 0 var(--color-link), -32px 0 var(--color-link);
-    }
+  50% {
+    background-color: var(--color-accent);
+    box-shadow:
+      32px 0 var(--color-link),
+      -32px 0 var(--color-link);
+  }
 
-    100% {
-        background-color: var(--color-link);
-        box-shadow: 32px 0 var(--color-accent), -32px 0 var(--color-link);
-    }
+  100% {
+    background-color: var(--color-link);
+    box-shadow:
+      32px 0 var(--color-accent),
+      -32px 0 var(--color-link);
+  }
 }

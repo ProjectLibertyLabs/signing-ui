@@ -12,13 +12,10 @@
     "noEmit": false,
     "esModuleInterop": true,
     // turned on by esModuleInterop
-//    "allowSyntheticDefaultImports": true,
+    //    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": ["./src/**/*"],
-  "typeRoots": [
-    "node_modules/@types",
-    "types"
-  ]
+  "typeRoots": ["node_modules/@types", "types"]
 }
