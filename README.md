@@ -30,4 +30,4 @@ Load at http://localhost:8080
 
 ## Deployment
 
-https://amplicalabs.github.io/signing-ui/
+https://projectlibertylabs.github.io/signing-ui/
