@@ -20,7 +20,7 @@ A UI to demonstrate and help with testing extrinsics that send signed payloads t
 
 ## References
 
-https://libertydsnp.github.io/frequency/
+https://frequency-chain.github.io/frequency/
 
 ## To run locally:
 

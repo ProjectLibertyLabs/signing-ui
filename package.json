@@ -1,7 +1,7 @@
 {
   "name": "signing-ui",
   "version": "1.1.0",
-  "description": "A UI to demonstrate and help with testing extrinsics that send signed payloads to a Frequency parachain.",
+  "description": "A UI to demonstrate and help with testing extrinsics that send signed payloads to Frequency.",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LibertyDSNP/signing-ui.git"
+    "url": "git+https://github.com/ProjectLibertyLabs/signing-ui.git"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/LibertyDSNP/signing-ui/issues"
+    "url": "https://github.com/ProjectLibertyLabs/signing-ui/issues"
   },
-  "homepage": "https://github.com/LibertyDSNP/signing-ui#readme",
+  "homepage": "https://github.com/ProjectLibertyLabs/signing-ui#readme",
   "devDependencies": {
     "@babel/preset-env": "^7.24.3",
     "@babel/preset-typescript": "^7.24.1",
