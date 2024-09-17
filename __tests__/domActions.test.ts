@@ -25,7 +25,6 @@ test("showExtrinsicStatus works", () => {
 test("onProviderEndpointChanged", () => {
   document.body.innerHTML = `<select id=${domActionsSelectors.providerList} required>
             <option value="wss://0.rpc.testnet.amplica.io" name="frequency_paseo">Frequency Testnet Paseo</option>
-            <option value="wss://rpc.rococo.frequency.xyz" name="frequency_rococo">Frequency Testnet Rococo</option>
             <option value="ws://localhost:9944" name="localhost">Localhost</option>
             <option id=${domActionsSelectors.otherEndpointSelection}>Other endpoint</option>
         </select>
